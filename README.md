@@ -32,3 +32,8 @@
 - QR 스캔은 카메라 대신 학생을 선택하는 방식으로 흉내 냅니다. 검사 과정(신청 여부, 중복, 입금 미확인)은 같습니다.
 - 늦은 출석 코드 검증은 실제 앱에서 서버가 해야 조작을 막을 수 있습니다.
 - 로그인 대신 "시연 인물" 전환을 사용합니다.
+
+## 웹 주소와 안드로이드 앱
+
+- **웹:** GitHub Pages를 켜면 `https://jjawujj.github.io/club-app/` 에서 열립니다.
+- **안드로이드 APK:** `main`에 올라올 때마다 GitHub Actions(`.github/workflows/android-apk.yml`)가 Capacitor로 `index.html`을 앱으로 포장합니다. 저장소의 **Releases → apk-latest**에서 `moimjangbu.apk`를 받아 설치합니다. 설치할 때 "출처를 알 수 없는 앱 설치"를 허용해야 합니다.
