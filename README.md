@@ -37,4 +37,4 @@
 ## 웹 주소와 안드로이드 앱
 
 - **웹:** GitHub Pages를 켜면 `https://jjawujj.github.io/club-app/` 에서 열립니다.
-- **안드로이드 APK:** GitHub Actions 탭에서 **Android APK → Run workflow**를 누르면(`.github/workflows/android-apk.yml`)가 Capacitor로 `index.html`을 앱으로 포장합니다. 끝나면 저장소의 **Releases → apk-latest**에서 `moimjangbu.apk`를 받아 설치합니다. 설치할 때 "출처를 알 수 없는 앱 설치"를 허용해야 합니다.
+- **안드로이드 APK:** GitHub Actions 탭에서 **Android APK → Run workflow**를 누르면 `.github/workflows/android-apk.yml`이 Capacitor로 `index.html`을 앱으로 포장합니다. 카메라 권한과 QR 라이브러리도 앱 안에 넣습니다. 끝나면 저장소의 **Releases → apk-latest**에서 `moimjangbu.apk`를 받아 설치합니다. 설치할 때 "출처를 알 수 없는 앱 설치"를 허용해야 합니다.
