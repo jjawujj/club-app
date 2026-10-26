@@ -1,10 +1,8 @@
-# main에 올라올 때마다 index.html을 안드로이드 앱(APK)으로 포장합니다.
+# Actions 탭에서 'Run workflow'를 누르면 index.html을 안드로이드 앱(APK)으로 포장합니다.
 # 결과 APK는 저장소의 Releases > "apk-latest"에서 내려받을 수 있습니다.
 name: Android APK
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
