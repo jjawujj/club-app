@@ -1,0 +1,1196 @@
+<title>모임장부</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  /* 레이아웃: 상단 고정 바(앱 이름 · 시연 인물 전환) + 가로 탭 + 최대 1000px 단일 작업 영역 */
+  --bg:#F2F4F7; --surface:#FFFFFF; --sunk:#E8ECF2; --line:#D6DCE5; --fg:#161D29; --muted:#5A6475;
+  --accent:#2747C9; --accent-ink:#FFFFFF; --accent-soft:#E2E8FB;
+  --ok:#0F7556; --ok-soft:#DCF2E9; --warn:#8F5600; --warn-soft:#FAEDD6;
+  --bad:#B02236; --bad-soft:#FAE2E5; --info:#1F5F9E; --info-soft:#E0ECF8;
+  --ticket:#FFF7E4; --ticket-line:#E3CF9F; --paper:#FFFFFF;
+  --f-display:"Do Hyeon","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F131A; --surface:#171C26; --sunk:#1F2633; --line:#2D3646; --fg:#E6EAF1; --muted:#9AA3B3;
+  --accent:#8BA2FF; --accent-ink:#0C1222; --accent-soft:#1F2A50;
+  --ok:#55D0A2; --ok-soft:#123426; --warn:#F0B460; --warn-soft:#382811;
+  --bad:#FF8B97; --bad-soft:#3B1B21; --info:#7DB6F0; --info-soft:#15283D;
+  --ticket:#272315; --ticket-line:#4C432A; --paper:#FFFFFF; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0F131A; --surface:#171C26; --sunk:#1F2633; --line:#2D3646; --fg:#E6EAF1; --muted:#9AA3B3;
+  --accent:#8BA2FF; --accent-ink:#0C1222; --accent-soft:#1F2A50;
+  --ok:#55D0A2; --ok-soft:#123426; --warn:#F0B460; --warn-soft:#382811;
+  --bad:#FF8B97; --bad-soft:#3B1B21; --info:#7DB6F0; --info-soft:#15283D;
+  --ticket:#272315; --ticket-line:#4C432A; --paper:#FFFFFF; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h2,h3,h4{margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:400;font-size:1.75rem;letter-spacing:.01em}
+h3{font-size:1.02rem;font-weight:600}
+h4{font-size:.9rem;font-weight:600;color:var(--muted);margin-top:1.4rem;margin-bottom:.5rem}
+p{margin:0}
+b{font-weight:600}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.sm{font-size:.84rem}
+.lbl{display:block;font-size:.74rem;letter-spacing:.06em;color:var(--muted);font-weight:500}
+
+/* 상단 바 */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in,.tabs-in,main{max-width:1000px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top-in{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-block:10px}
+.brand{display:flex;align-items:baseline;gap:8px;margin-right:auto}
+.brand strong{font-family:var(--f-display);font-weight:400;font-size:1.5rem;color:var(--accent)}
+.brand span{font-size:.8rem;color:var(--muted)}
+.who{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.who label{font-size:.78rem;color:var(--muted)}
+.who select{max-width:220px}
+.tabs{overflow-x:auto;border-top:1px solid var(--line)}
+.tabs-in{display:flex;gap:2px}
+.tab{appearance:none;border:0;background:none;color:var(--muted);font:inherit;font-weight:500;padding:10px 12px;border-bottom:2px solid transparent;white-space:nowrap;cursor:pointer}
+.tab:hover{color:var(--fg)}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.tab .n{display:inline-block;min-width:1.3em;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--bad);color:var(--paper);font-size:.72rem;line-height:1.3em;text-align:center}
+main{padding-block:22px 80px;display:grid;gap:18px}
+
+/* 공통 요소 */
+.view-head{display:grid;gap:4px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:10px;min-width:0}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:99px;font-size:.76rem;font-weight:600;white-space:nowrap;background:var(--sunk);color:var(--muted)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.info{background:var(--info-soft);color:var(--info)}
+.pill.type{background:var(--accent-soft);color:var(--accent)}
+.btn{appearance:none;font:inherit;font-weight:600;font-size:.9rem;border-radius:8px;padding:8px 14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:4px 10px;font-size:.82rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{appearance:none;border:0;background:none;color:var(--accent);font:inherit;font-weight:500;padding:0;cursor:pointer;justify-self:start}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+textarea{width:100%;resize:vertical;font-family:var(--f-body);font-size:.88rem;line-height:1.6}
+.field{display:grid;gap:4px;min-width:0}
+.field>span{font-size:.82rem;color:var(--muted);font-weight:500}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.msg{padding:10px 12px;border-radius:8px;font-size:.9rem;background:var(--sunk)}
+.msg.ok{background:var(--ok-soft);color:var(--ok)}
+.msg.warn{background:var(--warn-soft);color:var(--warn)}
+.msg.bad{background:var(--bad-soft);color:var(--bad)}
+.banner{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r);background:var(--sunk)}
+.banner.ok{background:var(--ok-soft)}
+.banner.warn{background:var(--warn-soft)}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;border-radius:8px;background:var(--warn-soft);color:var(--fg)}
+.confirm>span{font-size:.88rem;font-weight:500;margin-right:4px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.74rem;letter-spacing:.05em;color:var(--muted);font-weight:600;background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+tr.hl td{background:var(--warn-soft)}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r)}
+
+/* 행사 목록 */
+.ev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.ev-card{appearance:none;font:inherit;color:inherit;text-align:left;display:grid;gap:6px;align-content:start;padding:14px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);cursor:pointer}
+.ev-card:hover{border-color:var(--accent)}
+.ev-card>b{font-size:1.05rem}
+.ev-card-top{display:flex;justify-content:space-between;align-items:center}
+
+/* 행사 상세 */
+.ev-head{display:grid;gap:12px}
+.ev-title{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px 18px;margin:0}
+.facts div{min-width:0}
+.facts dt{font-size:.74rem;letter-spacing:.06em;color:var(--muted)}
+.facts dd{margin:0;font-weight:500}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.steps li{display:flex;align-items:center;gap:6px;padding:5px 12px 5px 5px;border-radius:99px;background:var(--sunk);color:var(--muted);font-size:.84rem;font-weight:500}
+.steps li span{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--surface);font-size:.74rem;font-family:var(--f-mono)}
+.steps li.done{background:var(--ok-soft);color:var(--ok)}
+.steps li.done span{background:var(--ok);color:var(--paper)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;align-items:start}
+.acct{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--sunk)}
+.acct b{word-break:break-all}
+.refund{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1px dashed var(--line)}
+.demo{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-top:8px;border-top:1px dashed var(--line)}
+.demo .lbl{margin-right:4px}
+
+/* 출석 티켓: 행사 입장권처럼 절취선이 있는 카드 */
+.ticket{display:grid;grid-template-columns:1fr auto;background:var(--ticket);border:1px solid var(--ticket-line);border-radius:var(--r);overflow:hidden}
+.ticket-main{padding:16px;display:grid;gap:4px;align-content:center;min-width:0}
+.ticket-main>b{font-size:1.25rem}
+.ticket-qr{padding:14px;border-left:2px dashed var(--ticket-line);display:grid;place-items:center}
+.qr{background:var(--paper);padding:8px;border-radius:6px;line-height:0}
+.qr img,.qr canvas{display:block;width:140px;height:140px}
+.qr.fallback{line-height:1.3;font-family:var(--f-mono);font-size:.7rem;color:#111;width:156px;word-break:break-all}
+.stamp{justify-self:start;margin-top:6px;padding:3px 10px;border:2px solid var(--ok);color:var(--ok);border-radius:6px;font-weight:700;font-size:.85rem;transform:rotate(-2deg)}
+
+/* 출석 관리 */
+.att-head{display:flex;flex-wrap:wrap;gap:10px;align-items:end;justify-content:space-between}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.tile{padding:12px 14px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line)}
+.tile b{display:block;font-family:var(--f-mono);font-size:1.5rem;font-weight:500;font-variant-numeric:tabular-nums}
+.tile.alert b{color:var(--bad)}
+.subtabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.subtab{appearance:none;font:inherit;font-size:.88rem;font-weight:500;padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--fg);white-space:nowrap;cursor:pointer}
+.subtab.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.scan{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:16px;align-items:start}
+.viewfinder{aspect-ratio:1;max-width:100%;border-radius:var(--r);background:var(--sunk);position:relative;display:grid;place-items:center;color:var(--muted);font-size:.8rem}
+.viewfinder span{position:absolute;inset:18%;border:3px solid var(--accent);border-radius:12px;opacity:.7}
+.scan-side{display:grid;gap:10px;min-width:0}
+.plist{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.plist li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line)}
+.plist li:last-child{border-bottom:0}
+.plist li>div:first-child{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;min-width:0}
+.plist li.is-in{background:var(--ok-soft)}
+.late-on{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:start}
+.late-qr{display:grid;gap:8px;justify-items:center;padding:16px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line)}
+.late-qr .qr img,.late-qr .qr canvas{width:190px;height:190px}
+.code{font-size:1.6rem;letter-spacing:.18em}
+.late-ctl,.late-off{display:grid;gap:10px;align-content:start;max-width:560px}
+.count{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+
+/* 정산 */
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.chip{appearance:none;font:inherit;color:inherit;display:grid;gap:4px;justify-items:start;padding:10px 12px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);cursor:pointer;white-space:nowrap}
+.chip.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.calc td:first-child{font-weight:600}
+.calc td:nth-child(2){color:var(--muted);white-space:normal;min-width:160px}
+.calc tr.total td{background:var(--accent-soft);font-weight:700}
+.calc tr.total td:nth-child(2){color:var(--fg)}
+.big{font-family:var(--f-mono);font-size:1.6rem;font-weight:500}
+
+/* 행사 등록 */
+.form{display:grid;gap:14px;max-width:620px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.seg{border:0;padding:0;margin:0;display:grid;gap:8px}
+.seg legend{font-size:.82rem;color:var(--muted);font-weight:500;margin-bottom:4px;padding:0}
+.seg label{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer}
+.seg small{color:var(--muted);width:100%;padding-left:24px}
+.rules{display:grid;gap:8px}
+.rule-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.rule-row input{width:72px}
+
+/* 시연 순서 */
+.guide{display:grid;gap:12px;counter-reset:none}
+.guide .card p{max-width:68ch}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:20;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.9rem;max-width:calc(100% - 32px);box-shadow:0 6px 24px rgba(0,0,0,.18)}
+
+@media (max-width:640px){
+  .scan{grid-template-columns:1fr}
+  .viewfinder{max-width:200px}
+  .late-on{grid-template-columns:1fr}
+  .ticket{grid-template-columns:1fr}
+  .ticket-qr{border-left:0;border-top:2px dashed var(--ticket-line)}
+  h2{font-size:1.5rem}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><strong>모임장부</strong><span id="semLabel"></span></div>
+    <div class="who">
+      <label for="persona">시연 인물</label>
+      <select id="persona" data-change="persona"></select>
+      <span id="whoRole"></span>
+      <span id="todayPill"></span>
+    </div>
+  </div>
+  <nav class="tabs" aria-label="메뉴"><div class="tabs-in" id="tabs"></div></nav>
+</header>
+<main id="main"></main>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+/* =====================================================================
+   모임장부 · 시연용 프로토타입
+   구조
+   1) 기본 도우미        - 날짜, 금액 표시 같은 작은 함수
+   2) 데이터(상태) 준비  - 표 8개: 계정, 학기 회원, 행사, 환불 규칙(행사 안), 참가, 입출금, 장부, 설정
+   3) 규칙 계산          - 권한, 환불 비율, 정산 공식, 늦은 출석 코드
+   4) 화면 그리기        - 탭마다 HTML을 만들어 넣음
+   5) 버튼 동작          - data-act 값에 맞는 함수 실행 → 데이터 변경 → 화면 다시 그리기
+   실제 앱에서는 2)가 서버 데이터베이스(Firebase/Supabase 등)에 있고,
+   3)의 일부(늦은 출석 코드 검증 등)는 서버에서 실행해야 조작을 막을 수 있습니다.
+   ===================================================================== */
+
+/* ---------- 1) 기본 도우미 ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const won = n => Math.round(n).toLocaleString('ko-KR') + '원';
+const uid = p => p + Math.random().toString(36).slice(2, 9);
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const realToday = () => ymd(new Date());
+const daysBetween = (from, to) => Math.round((new Date(to+'T00:00:00') - new Date(from+'T00:00:00')) / 86400000);
+const WD = '일월화수목금토';
+const dlabel = s => { if(!s) return ''; const d = new Date(s.slice(0,10)+'T00:00:00'); return `${d.getMonth()+1}월 ${d.getDate()}일 (${WD[d.getDay()]})`; };
+const timeLabel = ms => { const d = new Date(ms); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const dtLocal = ms => { const d = new Date(ms); return `${ymd(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+
+/* 한글 초성 추출: '탁하늘' → 'ㅌㅎㄴ' (이름 검색에 사용) */
+const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+const cho = s => [...s].map(ch => { const c = ch.charCodeAt(0) - 0xAC00; return c >= 0 && c <= 11171 ? CHO[Math.floor(c / 588)] : ch; }).join('');
+
+/* ---------- 2) 데이터(상태) ---------- */
+const KEY = 'moimjangbu-demo-v1';
+const CUR = '2026-2', PREV = '2026-1';
+const SEMS = {'2026-1':'2026년 1학기', '2026-2':'2026년 2학기'};
+const ROLE_LABEL = {president:'회장', treasurer:'총무', staff:'운영진', member:'회원'};
+const KIND_LABEL = {prepaid:'선납금', extra:'추가금', postpaid:'후불 정산금', refund:'환불'};
+const METHOD = {qr:'QR 스캔', search:'이름 검색', late:'늦은 출석 QR', list:'명단 체크', import:'활동 출석자 불러오기', manual:'현장 추가'};
+const NAMES = ['박서준','이하은','최도윤','정유나','한지호','김민지','강태현','윤서아','임준혁','오지민',
+  '신예린','조현우','장소율','배도현','권나연','황민재','송하린','문시우','류채원','홍주원',
+  '안다인','전승민','고은채','남궁윤','서지안','양현서','유태오','노아린','하준서','심가온',
+  '차윤호','구서연','표지성','민하율','진수아','곽도경','엄지유','변재윤','탁하늘','석민서',
+  '기윤아','방시원','추다온','도하람','라은서','마현빈','설지아','반서진','왕예준','편소희'];
+
+let S;  // 앱 전체 데이터. 실제 앱에서는 서버 데이터베이스에 저장됨
+
+function seed(){
+  const depts = ['경제학과','통계학과','경영학과','컴퓨터공학과','국어국문학과','사회학과','산업공학과','미디어학과'];
+  const roleFor = i => i === 0 ? 'president' : i === 1 ? 'treasurer' : i <= 4 ? 'staff' : 'member';
+  // 표 ① 계정: 한 번 만들면 학기가 바뀌어도 유지
+  const users = NAMES.map((name, i) => ({ id:'u'+i, name,
+    sid:`20${22 + i % 4}${String((i * 48271 + 12345) % 1000000).padStart(6,'0')}`,
+    dept:depts[i % depts.length], phone:`010-${String(2000 + i*37).slice(-4)}-${String(5000 + i*91).slice(-4)}` }));
+  // 표 ③ 학기 회원: 학기마다 다시 가입하므로 계정과 분리
+  const ms = [];
+  users.forEach((u, i) => {
+    if (i <= 46) ms.push({userId:u.id, sem:PREV, role:roleFor(i), status:'approved', kakao:true, appliedAt:'2026-02-20'});
+    if (i <= 44) ms.push({userId:u.id, sem:CUR, role:roleFor(i), status:'approved', kakao:i < 42, appliedAt:'2026-08-25'});
+    if (i >= 47) ms.push({userId:u.id, sem:CUR, role:'member', status:'pending', kakao:false, appliedAt:'2026-10-2' + (i - 44)});
+  });
+  // 표 ④ 행사 (환불 규칙은 행사마다 rules 목록으로 저장)
+  const base = {linked:null, lateUntil:null, locked:false, lockedBy:null, lockedAt:null, settlement:null};
+  const events = [
+    {...base, id:'e-open', name:'2026-2 개강총회', type:'prepaid', date:'2026-09-05', fee:30000, deadline:'2026-09-01', rules:[{days:5, rate:100}]},
+    {...base, id:'e-oct', name:'할로윈 정기모임', type:'prepaid', date:'2026-10-26', fee:30000, deadline:'2026-10-23', rules:[{days:5, rate:100}]},
+    {...base, id:'e-oct-after', name:'할로윈 정기모임 뒷풀이', type:'postpaid', date:'2026-10-26', fee:0, deadline:'2026-10-26', rules:[], linked:'e-oct'},
+    {...base, id:'e-mt', name:'가을 MT', type:'prepaid', date:'2026-11-07', fee:50000, deadline:'2026-11-01', rules:[{days:7, rate:100}, {days:5, rate:50}]},
+  ];
+  S = { users, ms, events, parts:[], pays:[], ledger:[],
+        settings:{ account:'카카오뱅크 3333-12-3456789 (예금주 이하은, 예시)', today:null },
+        secret: Math.random().toString(36).slice(2) };
+
+  // 표 ⑥ 참가: 행사 × 사람 한 줄  /  표 ⑦ 입출금: 돈이 오간 기록
+  const addPart = (eventId, i, o = {}) => { const p = {id:'p'+S.parts.length, eventId, userId:'u'+i, guest:null, status:'applied',
+      appliedAt:o.appliedAt || '', attended:false, method:null, checkedBy:null, checkedAt:null, cancelReqAt:null, refundRate:null};
+    if (o.att) Object.assign(p, {attended:true, method:o.method || 'qr', checkedBy:o.by || 'u2', checkedAt:o.at});
+    S.parts.push(p); return p; };
+  const addPay = (p, kind, amount, o = {}) => S.pays.push({id:'m'+S.pays.length, partId:p.id, kind, amount,
+      payer:o.payer ?? user(p.userId).name, reportedAt:o.rep ?? null, confirmedAt:o.conf ?? null, confirmedBy:o.conf ? (o.by || 'u1') : null});
+
+  // 개강총회: 정산까지 끝난 행사 (미납자 예시용)
+  const E0 = S.events[0];
+  for (let i = 0; i <= 33; i++){
+    const p = addPart(E0.id, i, {appliedAt:'2026-08-27', att: i !== 12 && i !== 27, at:`2026-09-05 18:${pad(10 + i)}`, by: i % 2 ? 'u2' : 'u3'});
+    addPay(p, 'prepaid', 30000, {rep:'2026-08-28', conf:'2026-08-29'});
+  }
+  E0.locked = true; E0.lockedBy = 'u1'; E0.lockedAt = '2026-09-06 10:02';
+  settleEvent(E0, 1050000, 'u1', '2026-09-06');
+  S.pays.filter(m => m.kind === 'extra').forEach(m => {
+    const who = S.parts.find(p => p.id === m.partId).userId;
+    if (who === 'u9' || who === 'u30') return;                 // 미입금
+    m.payer = user(who).name; m.reportedAt = '2026-09-07';
+    if (who !== 'u21') { m.confirmedAt = '2026-09-08'; m.confirmedBy = 'u1'; }  // u21은 확인 대기
+  });
+
+  // 할로윈 정기모임: 오늘 진행하는 행사 (출석 시연용)
+  const E1 = S.events[1];
+  const notYet = [5, 15, 36, 37, 38, 39];
+  for (let i = 0; i <= 39; i++){
+    const p = addPart(E1.id, i, {appliedAt:'2026-10-15', att: !notYet.includes(i), method: i % 7 === 0 ? 'search' : 'qr',
+      at:`2026-10-26 18:${pad(5 + i)}`, by: i % 2 ? 'u2' : 'u3'});
+    addPay(p, 'prepaid', 30000, {rep:'2026-10-16', conf:'2026-10-17'});
+    if (i === 15){ // 7일 전에 취소 요청 → 100% 환불 완료
+      Object.assign(p, {status:'refunded', cancelReqAt:'2026-10-19', refundRate:100});
+      S.pays.push({id:'m'+S.pays.length, partId:p.id, kind:'refund', amount:30000, payer:null, reportedAt:null, confirmedAt:'2026-10-20', confirmedBy:'u1'});
+    }
+  }
+  // 뒷풀이: 미리 참여 표시한 3명만 있음
+  [2, 7, 9].forEach(i => addPart('e-oct-after', i, {appliedAt:'2026-10-24'}));
+
+  // 가을 MT: 모집 중 (입금 확인, 취소 요청 시연용)
+  const E3 = S.events[3];
+  [0,1,2,5,...Array.from({length:26}, (_, k) => k + 6)].forEach(i => {
+    const p = addPart(E3.id, i, {appliedAt:'2026-10-20'});
+    if ((i <= 2) || (i >= 6 && i <= 20)) addPay(p, 'prepaid', 50000, {rep:'2026-10-21', conf:'2026-10-22'});
+    else if (i >= 21 && i <= 26) addPay(p, 'prepaid', 50000, {rep:'2026-10-24', payer: i === 22 ? '고은채MT' : i === 24 ? '서지안엄마' : NAMES[i]});
+    if (i === 20) Object.assign(p, {status:'cancelRequested', cancelReqAt:'2026-10-24', refundRate:refundRate(E3, '2026-10-24')});
+  });
+  return S;
+}
+
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+function load(){ try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch(e) {} return null; }
+
+/* ---------- 3) 규칙 계산 ---------- */
+const today = () => S.settings.today || realToday();   // 시연 기준일 (장부·설정에서 바꿀 수 있음)
+const stamp = () => { const d = new Date(); return `${today()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const user = id => S.users.find(u => u.id === id);
+const ev = id => S.events.find(e => e.id === id);
+const mem = (userId, sem = CUR) => S.ms.find(m => m.userId === userId && m.sem === sem);
+const roleOf = userId => { const m = mem(userId); return m && m.status === 'approved' ? m.role : null; };
+const isFinR = r => r === 'treasurer' || r === 'president';    // 입금 확인, 명단 확정, 정산
+const isStaffR = r => r === 'staff' || isFinR(r);              // 행사 등록, 출석 체크
+const me = () => user(ui.persona);
+const myRole = () => roleOf(ui.persona);
+const partsOf = eid => S.parts.filter(p => p.eventId === eid);
+const isActive = p => p.status === 'applied' || p.status === 'cancelRequested';
+const activeParts = eid => partsOf(eid).filter(isActive);
+const partOf = (eid, userId) => S.parts.find(p => p.eventId === eid && p.userId === userId);
+const paysOf = pid => S.pays.filter(m => m.partId === pid);
+const prepaidOf = p => paysOf(p.id).find(m => m.kind === 'prepaid');
+const chargeOf = p => paysOf(p.id).find(m => m.kind === 'extra' || m.kind === 'postpaid');
+const pname = p => p.guest ? p.guest + ' (손님)' : user(p.userId).name;
+
+/* 환불 비율: 행사까지 남은 일수가 규칙의 'n일 전까지'를 만족하는 첫 구간의 비율 */
+function refundRate(e, onDate){
+  const left = daysBetween(onDate, e.date);
+  const rules = [...e.rules].sort((a, b) => b.days - a.days);
+  for (const r of rules) if (left >= r.days) return r.rate;
+  return 0;
+}
+function ruleText(e){
+  if (e.type !== 'prepaid') return '선납금 없음';
+  const rs = [...e.rules].sort((a, b) => b.days - a.days);
+  return (rs.length ? rs.map(r => `${r.days}일 전까지 ${r.rate}%`).join(' · ') + ' · 그 이후 환불 없음' : '환불 없음') + ' · 불참 시 환불 없음';
+}
+
+/* 정산 공식
+   확보금 = 확인된 선납금 − 환불액
+   부족분 = 총지출 − 확보금
+   부족분 > 0 → 1인당 = 부족분 ÷ N (1원 미만 버림), 버림 차액은 회비 부담
+   부족분 ≤ 0 → 추가금 없음, 남은 금액은 회비로 이월
+   후불형은 확보금이 0이므로 1인당 = 총지출 ÷ N */
+function calcSettlement(e, spent){
+  const parts = partsOf(e.id);
+  const attendees = parts.filter(p => isActive(p) && p.attended);
+  const N = attendees.length;
+  let confirmedSum = 0, refundSum = 0, paidCount = 0;
+  if (e.type === 'prepaid'){
+    parts.forEach(p => paysOf(p.id).forEach(m => {
+      if (m.kind === 'prepaid' && m.confirmedAt){ confirmedSum += m.amount; paidCount++; }
+      if (m.kind === 'refund') refundSum += m.amount;
+    }));
+  }
+  const secured = confirmedSum - refundSum;
+  const short = spent - secured;
+  let per = 0, gap = 0, carry = 0;
+  if (short > 0 && N > 0){ per = Math.floor(short / N); gap = short - per * N; }
+  else if (short <= 0) carry = -short;
+  const unpaidAtt = e.type === 'prepaid' ? attendees.filter(p => !prepaidOf(p)?.confirmedAt) : [];
+  return {N, memberN:attendees.filter(p => p.userId).length, guestN:attendees.filter(p => p.guest).length,
+          confirmedSum, refundSum, paidCount, secured, short, per, gap, carry, attendees, unpaidAtt};
+}
+function settleEvent(e, spent, by, date){
+  const {attendees, unpaidAtt, ...c} = calcSettlement(e, spent);
+  e.settlement = {...c, spent, by, at:date};
+  if (c.per > 0) attendees.forEach(p => S.pays.push({id:uid('m'), partId:p.id, kind:e.type === 'prepaid' ? 'extra' : 'postpaid',
+      amount:c.per, payer:null, reportedAt:null, confirmedAt:null, confirmedBy:null}));
+  if (c.gap > 0) S.ledger.push({date, desc:`${e.name} · 1인당 금액 버림 차액`, amount:-c.gap});
+  if (c.carry > 0) S.ledger.push({date, desc:`${e.name} · 남은 금액 이월`, amount:c.carry});
+}
+
+/* 늦은 출석 코드: 30초마다 바뀌는 6자리. 직전 코드까지만 인정(최대 1분)
+   실제 앱에서는 secret을 서버만 알고, 검증도 서버에서 해야 함 */
+const SLOT = 30000;
+const slotNow = () => Math.floor(Date.now() / SLOT);
+function hashStr(s){ let h = 2166136261; for (const ch of s){ h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  return (h >>> 0).toString(36).toUpperCase().padStart(6, '0').slice(-6); }
+const lateToken = (eid, slot) => hashStr(`${eid}|${slot}|${S.secret}`);
+const lateOpen = e => !!e.lateUntil && Date.now() < e.lateUntil;
+
+function mark(p, method, by){ Object.assign(p, {attended:true, method, checkedBy:by || ui.persona, checkedAt:stamp()}); }
+function unmark(p){ Object.assign(p, {attended:false, method:null, checkedBy:null, checkedAt:null}); }
+function ensurePart(eid, userId){
+  let p = partOf(eid, userId);
+  if (p){ p.status = 'applied'; return p; }
+  p = {id:uid('p'), eventId:eid, userId, guest:null, status:'applied', appliedAt:today(), attended:false, method:null,
+       checkedBy:null, checkedAt:null, cancelReqAt:null, refundRate:null};
+  S.parts.push(p); return p;
+}
+
+function checkLate(e, userId, code){
+  if (!lateOpen(e)) return {ok:false, msg:'늦은 출석이 마감되었습니다. 운영진에게 직접 확인을 요청하세요.'};
+  if (e.locked) return {ok:false, msg:'출석이 이미 확정되었습니다.'};
+  const s = slotNow();
+  if (code !== lateToken(e.id, s) && code !== lateToken(e.id, s - 1))
+    return {ok:false, msg:'만료되었거나 잘못된 코드입니다. 운영진 화면에 지금 떠 있는 QR을 다시 찍어 주세요.'};
+  let p = partOf(e.id, userId);
+  if (!p || !isActive(p)){
+    if (e.type !== 'postpaid') return {ok:false, msg:'이 행사에 신청하지 않았습니다.'};
+    p = ensurePart(e.id, userId);
+  }
+  if (p.attended) return {ok:false, msg:'이미 출석 처리되어 있습니다.'};
+  mark(p, 'late', userId);
+  return {ok:true, msg:`출석했습니다 (${p.checkedAt.slice(11)}).`};
+}
+
+function doScan(e, code){
+  if (e.locked) return {tone:'bad', msg:'출석이 확정되어 더 이상 체크할 수 없습니다.'};
+  const userId = (code || '').replace('MOIM:', '');
+  const u = user(userId);
+  if (!u || !roleOf(userId)) return {tone:'bad', msg:'이번 학기 회원의 QR이 아닙니다.'};
+  let p = partOf(e.id, userId);
+  const who = `${u.name} (${u.sid})`;
+  if (!p || !isActive(p)){
+    if (e.type !== 'postpaid') return {tone:'bad', msg:`${who}: 이 행사에 신청하지 않은 회원입니다.`};
+    p = ensurePart(e.id, userId); mark(p, 'qr');
+    return {tone:'ok', msg:`${who}: 현장 참여로 명단에 추가하고 출석 처리했습니다.`};
+  }
+  if (p.attended) return {tone:'warn', msg:`${who}: 이미 ${p.checkedAt.slice(11)}에 출석했습니다.`};
+  mark(p, 'qr');
+  if (e.type === 'prepaid' && !prepaidOf(p)?.confirmedAt)
+    return {tone:'warn', msg:`${who}: 출석 처리했지만 입금이 확인되지 않았습니다. 총무·회장에게 알려 주세요.`};
+  return {tone:'ok', msg:`${who}: 출석 처리했습니다.`};
+}
+
+/* ---------- 4) 화면 그리기 ---------- */
+let ui = { persona:'u5', tab:'events', eventId:null, attEvent:'e-oct', attTab:'scan', settleEvent:'e-oct',
+           confirm:null, search:'', headcount:'', scanMsg:null, lateMsg:null, spent:{}, lastSlot:null };
+
+const pill = (label, tone = '') => `<span class="pill ${tone}">${esc(label)}</span>`;
+const dataAttrs = d => Object.entries(d).map(([k, v]) => `data-${k}="${esc(v)}"`).join(' ');
+const btn = (label, act, d = {}, cls = '') => `<button type="button" class="btn ${cls}" data-act="${act}" ${dataAttrs(d)}>${label}</button>`;
+const card = (title, body) => `<section class="card"><h3>${title}</h3>${body}</section>`;
+/* 확인 단계가 필요한 버튼: 한 번 누르면 질문이 나오고, '예'를 눌러야 실행 */
+function confirmable(key, label, question, act, d, cls = 'primary'){
+  if (ui.confirm === key) return `<div class="confirm"><span>${question}</span>${btn('예', act, d, 'primary sm')}${btn('아니요', 'unask', {}, 'ghost sm')}</div>`;
+  return btn(label, 'ask', {key}, cls);
+}
+const dday = s => { const n = daysBetween(today(), s); return n > 0 ? `D-${n}` : n === 0 ? 'D-DAY' : '종료'; };
+
+function payPill(p){
+  const m = prepaidOf(p);
+  if (!m) return pill('미입금', 'bad');
+  return m.confirmedAt ? pill('입금 확인', 'ok') : pill('입금 확인 중', 'info');
+}
+function myStatus(e, p){
+  if (!p || p.status === 'cancelled') return {label:'미신청', tone:''};
+  if (p.status === 'refunded') return {label:'환불 완료', tone:''};
+  if (p.status === 'cancelRequested') return {label:'취소 요청 중', tone:'warn'};
+  if (e.settlement){
+    if (!p.attended) return {label:'불참', tone:''};
+    const c = chargeOf(p);
+    if (!c || c.confirmedAt) return {label:'정산 완료', tone:'ok'};
+    if (c.reportedAt) return {label:'입금 확인 중', tone:'info'};
+    return {label: e.type === 'prepaid' ? '추가금 미납' : '정산금 미납', tone:'bad'};
+  }
+  if (p.attended) return {label:'출석', tone:'ok'};
+  if (e.type === 'prepaid'){
+    const m = prepaidOf(p);
+    if (!m) return {label:'입금 대기', tone:'bad'};
+    return m.confirmedAt ? {label:'입금 확인', tone:'ok'} : {label:'입금 확인 중', tone:'info'};
+  }
+  return {label:'참여 예정', tone:'info'};
+}
+
+function counts(){
+  return { pays: S.pays.filter(m => m.reportedAt && !m.confirmedAt).length,
+           cancels: S.parts.filter(p => p.status === 'cancelRequested').length,
+           members: S.ms.filter(m => m.sem === CUR && m.status === 'pending').length };
+}
+function tabList(r){
+  const c = counts(), n = k => k ? `<span class="n">${k}</span>` : '';
+  const t = [];
+  t.push(r ? {id:'events', label:'행사'} : {id:'join', label:'가입'});
+  if (isStaffR(r)) t.push({id:'attend', label:'출석 관리'}, {id:'create', label:'행사 등록'});
+  if (isFinR(r)) t.push({id:'money', label:'입금·환불' + n(c.pays + c.cancels)}, {id:'settle', label:'정산'},
+                        {id:'members', label:'회원' + n(c.members)}, {id:'ledger', label:'장부·설정'});
+  t.push({id:'guide', label:'시연 순서'});
+  return t;
+}
+function personaOptions(){
+  const g = {fin:[], staff:[], mem:[], pre:[]};
+  S.users.forEach(u => {
+    const r = roleOf(u.id), m = mem(u.id);
+    const tag = r ? ROLE_LABEL[r] : m?.status === 'pending' ? '승인 대기' : mem(u.id, PREV) ? '지난 학기 회원' : '가입 전';
+    const o = `<option value="${u.id}" ${u.id === ui.persona ? 'selected' : ''}>${esc(u.name)} · ${tag}</option>`;
+    (isFinR(r) ? g.fin : r === 'staff' ? g.staff : r ? g.mem : g.pre).push(o);
+  });
+  return `<optgroup label="총무·회장">${g.fin.join('')}</optgroup><optgroup label="운영진">${g.staff.join('')}</optgroup>
+    <optgroup label="회원">${g.mem.join('')}</optgroup>
+    <optgroup label="가입 전">${g.pre.join('')}<option value="__new" ${ui.persona === '__new' ? 'selected' : ''}>+ 새로 가입하는 사람</option></optgroup>`;
+}
+
+function render(){
+  const r = myRole();
+  const tabs = tabList(r);
+  if (!tabs.find(t => t.id === ui.tab)) ui.tab = tabs[0].id;
+  $('#semLabel').textContent = SEMS[CUR];
+  $('#persona').innerHTML = personaOptions();
+  $('#whoRole').innerHTML = ui.persona === '__new' ? pill('새 방문자') : pill(r ? ROLE_LABEL[r] : '가입 전', isFinR(r) ? 'type' : r ? 'info' : '');
+  $('#todayPill').innerHTML = S.settings.today ? pill('시연 기준일 ' + dlabel(S.settings.today), 'warn') : '';
+  $('#tabs').innerHTML = tabs.map(t => `<button type="button" class="tab ${t.id === ui.tab ? 'on' : ''}" data-act="tab" data-id="${t.id}">${t.label}</button>`).join('');
+  $('#main').innerHTML = VIEWS[ui.tab]();
+  mountQR();
+  if ($('#rulePreview')) updateRulePreview();
+  save();
+}
+function mountQR(root = document){
+  root.querySelectorAll('[data-qr]').forEach(el => {
+    el.innerHTML = '';
+    if (window.QRCode){
+      el.classList.remove('fallback');
+      new QRCode(el, {text:el.dataset.qr, width:256, height:256, colorDark:'#111111', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M});
+      el.removeAttribute('title');
+    } else { el.classList.add('fallback'); el.textContent = el.dataset.qr; }
+  });
+}
+
+const VIEWS = {};
+
+/* 회원: 행사 목록과 상세 */
+VIEWS.events = () => ui.eventId && ev(ui.eventId) ? eventDetail(ev(ui.eventId)) : eventsList();
+function eventsList(){
+  const evs = [...S.events].sort((a, b) => b.date.localeCompare(a.date));
+  return `<div class="view-head"><h2>${SEMS[CUR]} 행사</h2><p class="muted">${esc(me().name)}님의 신청 · 입금 · 출석 · 정산 상태가 행사마다 표시됩니다.</p></div>
+  <div class="ev-grid">${evs.map(e => { const st = myStatus(e, partOf(e.id, ui.persona));
+    return `<button type="button" class="ev-card" data-act="openEvent" data-id="${e.id}">
+      <div class="ev-card-top">${pill(e.type === 'prepaid' ? '선납형' : '후불형', 'type')}<span class="mono muted sm">${dday(e.date)}</span></div>
+      <b>${esc(e.name)}</b><span class="muted sm">${dlabel(e.date)} · ${e.type === 'prepaid' ? won(e.fee) : '끝난 뒤 1/N'}</span>
+      <div>${pill(st.label, st.tone)}</div></button>`; }).join('')}</div>`;
+}
+function steps(e, p){
+  const a = !!(p && isActive(p)), pp = a && prepaidOf(p), c = a && chargeOf(p);
+  const list = e.type === 'prepaid'
+    ? [['신청', a], ['입금 표시', a && !!pp], ['입금 확인', a && !!pp?.confirmedAt], ['출석', a && p.attended], ['정산', a && !!e.settlement && (!p.attended || !c || !!c.confirmedAt)]]
+    : [['참여', a], ['출석', a && p.attended], ['정산', a && !!e.settlement], ['입금 확인', a && !!c?.confirmedAt]];
+  return `<ol class="steps">${list.map(([l, d], i) => `<li class="${d ? 'done' : ''}"><span>${i + 1}</span>${l}</li>`).join('')}</ol>`;
+}
+function eventDetail(e){
+  const p = partOf(e.id, ui.persona), st = myStatus(e, p);
+  return `<button type="button" class="link" data-act="back">← 행사 목록</button>
+  <section class="ev-head">
+    <div class="ev-title"><h2>${esc(e.name)}</h2>${pill(e.type === 'prepaid' ? '선납형' : '후불형', 'type')}${pill(st.label, st.tone)}</div>
+    <dl class="facts">
+      <div><dt>일시</dt><dd>${dlabel(e.date)} · ${dday(e.date)}</dd></div>
+      <div><dt>${e.type === 'prepaid' ? '참가비' : '정산'}</dt><dd>${e.type === 'prepaid' ? won(e.fee) + ' 선납, 모자라면 추가 1/N' : '끝난 뒤 총액 1/N'}</dd></div>
+      ${e.type === 'prepaid' ? `<div><dt>신청 마감</dt><dd>${dlabel(e.deadline)}</dd></div>` : ''}
+      <div><dt>환불 규칙</dt><dd>${esc(ruleText(e))}</dd></div>
+    </dl>
+    ${steps(e, p)}
+  </section>
+  <div class="cols">${applyBlock(e, p)}${qrBlock(e, p)}${lateBlock(e, p)}${settleBlock(e, p)}</div>`;
+}
+function applyBlock(e, p){
+  const t = today();
+  if (e.settlement) return '';
+  if (!p || p.status === 'cancelled'){
+    if (e.type === 'prepaid'){
+      if (t > e.deadline || e.locked) return card('참가 신청', `<p class="muted">신청이 마감되었습니다.</p>`);
+      return card('참가 신청', `<p>신청한 뒤 참가비 ${won(e.fee)}을 동아리 계좌로 입금합니다.</p><div class="row">${btn('참가 신청', 'apply', {id:e.id}, 'primary')}</div>`);
+    }
+    return card('참여', `<p>뒷풀이는 대부분 현장에서 운영진이 명단에 넣습니다. 미리 표시해 두면 명단에 먼저 올라갑니다.</p><div class="row">${btn('참여 예정으로 표시', 'apply', {id:e.id}, 'primary')}</div>`);
+  }
+  if (p.status === 'refunded'){
+    const r = paysOf(p.id).find(m => m.kind === 'refund');
+    return card('취소 완료', `<p>${won(r?.amount || 0)} 환불되었습니다 (요청일 기준 ${p.refundRate}%).</p>`);
+  }
+  if (p.status === 'cancelRequested'){
+    const pp = prepaidOf(p);
+    return card('취소 요청 중', `<p>${dlabel(p.cancelReqAt)}에 요청했습니다. 요청일 기준 환불 비율은 <b>${p.refundRate}%</b>${pp ? `, 예상 환불액은 <b>${won(Math.floor(pp.amount * p.refundRate / 100))}</b>` : ''}입니다.</p><p class="muted sm">총무·회장이 승인하면 환불됩니다.</p>`);
+  }
+  if (e.type === 'postpaid'){
+    if (p.attended) return '';
+    return card('참여 예정', `<p>현장에서 내 QR을 보여 주면 출석 처리됩니다.</p><div class="row">${confirmable('cx:' + e.id, '참여 취소', '참여 표시를 취소할까요?', 'cancelDirect', {id:e.id}, 'ghost')}</div>`);
+  }
+  const pp = prepaidOf(p);
+  if (!pp) return card('참가비 입금', `
+    <div class="acct"><div><span class="lbl">입금 계좌</span><b class="mono">${esc(S.settings.account)}</b></div>${btn('복사', 'copy', {text:S.settings.account}, 'ghost sm')}</div>
+    <div class="acct"><div><span class="lbl">입금액</span><b class="mono">${won(e.fee)}</b></div></div>
+    <label class="field"><span>입금자명 (통장에 찍히는 이름)</span><input id="payer" value="${esc(me().name)}"></label>
+    <div class="row">${btn('입금했어요', 'reportPay', {id:e.id}, 'primary')}${confirmable('cx:' + e.id, '신청 취소', '입금 전이라 바로 취소됩니다. 취소할까요?', 'cancelDirect', {id:e.id}, 'ghost')}</div>
+    <p class="muted sm">'입금했어요'를 누른 뒤에는 직접 취소할 수 없고 취소 요청만 할 수 있습니다.</p>`);
+  let body = pp.confirmedAt
+    ? `<p>${won(pp.amount)} 입금이 확인되었습니다 (${dlabel(pp.confirmedAt)}, 확인 ${esc(user(pp.confirmedBy)?.name)}).</p>`
+    : `<p>${won(pp.amount)} 입금 표시를 했습니다 (입금자명 ${esc(pp.payer)}). 총무·회장이 통장 내역과 대조하고 있습니다.</p>`;
+  if (!p.attended && t <= e.date && !e.locked){
+    const rate = refundRate(e, t), amt = Math.floor(pp.amount * rate / 100);
+    body += `<div class="refund"><div><span class="lbl">오늘(${dlabel(t)}) 취소를 요청하면</span><b>환불 ${rate}% · ${won(amt)}</b></div>
+      ${confirmable('cr:' + e.id, '취소 요청', `환불 ${rate}%(${won(amt)})로 요청할까요?`, 'requestCancel', {id:e.id}, 'ghost')}</div>`;
+  }
+  return card(pp.confirmedAt ? '입금 확인 완료' : '입금 확인 중', body);
+}
+function qrBlock(e, p){
+  if (!p || !isActive(p) || e.settlement) return '';
+  const u = me();
+  return `<section class="ticket"><div class="ticket-main"><span class="lbl">내 출석 QR · ${esc(e.name)}</span><b>${esc(u.name)}</b>
+    <span class="mono muted">${u.sid}</span>
+    ${p.attended ? `<span class="stamp">출석 ${p.checkedAt ? p.checkedAt.slice(11) : ''} · ${METHOD[p.method] || ''}</span>` : `<p class="sm muted">입구에서 운영진에게 이 QR을 보여 주세요.</p>`}
+    </div><div class="ticket-qr"><div class="qr" data-qr="MOIM:${u.id}"></div></div></section>`;
+}
+function lateBlock(e, p){
+  if (!lateOpen(e) || e.settlement || e.locked) return '';
+  if (p && isActive(p) && p.attended) return ui.lateMsg?.ok ? card('늦은 출석', `<p class="msg ok">${esc(ui.lateMsg.msg)}</p>`) : '';
+  if (e.type === 'prepaid' && !(p && isActive(p))) return '';
+  return card('늦게 도착했나요?', `<p>운영진 화면에 떠 있는 QR을 찍으면 출석됩니다. 마감 ${timeLabel(e.lateUntil)}</p>
+    <label class="field"><span>QR 코드 값 (시연에서는 카메라 대신 입력)</span><input id="lateCode" class="mono" maxlength="6" autocomplete="off" placeholder="6자리 코드"></label>
+    <div class="row">${btn('출석 인증', 'lateCheckin', {id:e.id}, 'primary')}</div>
+    ${ui.lateMsg ? `<p class="msg ${ui.lateMsg.ok ? 'ok' : 'bad'}">${esc(ui.lateMsg.msg)}</p>` : ''}
+    <div class="demo"><span class="lbl">시연용</span>${btn('지금 화면의 코드 넣기', 'lateFill', {id:e.id}, 'ghost sm')}${btn('1분 전 사진 속 코드 넣기', 'lateFillOld', {id:e.id}, 'ghost sm')}</div>`);
+}
+function settleBlock(e, p){
+  if (!e.settlement || !p || !isActive(p)) return '';
+  const s = e.settlement;
+  if (!p.attended) return e.type === 'prepaid' ? card('정산', `<p>불참으로 처리되어 추가금이 없습니다. 불참자 선납금은 환불되지 않습니다.</p>`) : '';
+  const c = chargeOf(p);
+  const formula = e.type === 'prepaid'
+    ? `(총지출 ${won(s.spent)} − 확보금 ${won(s.secured)}) ÷ ${s.N}명`
+    : `총지출 ${won(s.spent)} ÷ ${s.N}명`;
+  if (!c) return card('정산 결과', `<p>선납금으로 모두 충당되어 추가금이 없습니다.</p>`);
+  let pay;
+  if (c.confirmedAt) pay = `<p class="msg ok">${dlabel(c.confirmedAt)}에 입금이 확인되었습니다.</p>`;
+  else if (c.reportedAt) pay = `<p class="msg">입금 표시를 했습니다. 총무·회장 확인을 기다리는 중입니다.</p>`;
+  else pay = `<div class="acct"><div><span class="lbl">입금 계좌</span><b class="mono">${esc(S.settings.account)}</b></div>${btn('복사', 'copy', {text:S.settings.account}, 'ghost sm')}</div>
+    <div class="row">${btn('입금했어요', 'reportCharge', {id:c.id}, 'primary')}</div>`;
+  return card(e.type === 'prepaid' ? '추가금 안내' : '정산금 안내', `<div><span class="lbl">${formula}, 1원 미만 버림</span><span class="big">${won(c.amount)}</span></div>${pay}`);
+}
+
+/* 가입 (이번 학기 회원이 아닌 사람) */
+VIEWS.join = () => {
+  if (ui.persona === '__new') return `<div class="view-head"><h2>동아리 가입 신청</h2><p class="muted">구글폼 대신 앱에서 신청합니다. 총무·회장이 승인하면 행사 메뉴가 열립니다.</p></div>
+    <form class="form card" data-submit="signup">
+      <div class="grid2"><label class="field"><span>이름</span><input id="su-name" autocomplete="off" placeholder="홍길동"></label>
+      <label class="field"><span>학번</span><input id="su-sid" inputmode="numeric" autocomplete="off" placeholder="2026123456"></label></div>
+      <div class="grid2"><label class="field"><span>학과</span><input id="su-dept" autocomplete="off" placeholder="경제학과"></label>
+      <label class="field"><span>연락처</span><input id="su-phone" inputmode="tel" autocomplete="off" placeholder="010-0000-0000"></label></div>
+      <label class="row sm"><input type="checkbox" id="su-agree"> 동아리 운영(출석·정산)을 위해 이름, 학번, 학과, 연락처를 수집하는 데 동의합니다.</label>
+      <p id="su-err" class="msg bad" hidden></p>
+      <div class="row"><button type="submit" class="btn primary">가입 신청</button></div>
+    </form>`;
+  const u = me(), m = mem(u.id), prev = mem(u.id, PREV);
+  if (m && m.status === 'pending') return `<div class="view-head"><h2>승인 대기 중</h2></div>
+    ${card(`${SEMS[CUR]} 가입 신청`, `<p>${dlabel(m.appliedAt)}에 신청했습니다. 총무·회장이 승인하면 행사 메뉴가 열립니다.</p><p class="muted sm">승인 후 운영진이 동아리 카톡방에 초대합니다.</p>`)}`;
+  return `<div class="view-head"><h2>${prev ? `${SEMS[CUR]} 재가입` : `${SEMS[CUR]} 가입 신청`}</h2>
+    <p class="muted">${prev ? `${SEMS[PREV]} 회원 기록이 있습니다. 계정은 그대로 두고 이번 학기 가입만 다시 신청합니다.` : '이번 학기 가입을 신청합니다.'}</p></div>
+    ${card('내 정보', `${m?.status === 'rejected' ? '<p class="msg bad">이전 신청이 거절되었습니다. 다시 신청할 수 있습니다.</p>' : ''}
+      <dl class="facts"><div><dt>이름</dt><dd>${esc(u.name)}</dd></div><div><dt>학번</dt><dd class="mono">${u.sid}</dd></div>
+      <div><dt>학과</dt><dd>${esc(u.dept)}</dd></div><div><dt>연락처</dt><dd class="mono">${esc(u.phone)}</dd></div></dl>
+      <label class="row sm"><input type="checkbox" id="jn-agree"> 동아리 운영(출석·정산)을 위해 위 정보를 수집하는 데 동의합니다.</label>
+      <p id="jn-err" class="msg bad" hidden></p>
+      <div class="row">${btn(prev ? '이번 학기 재가입 신청' : '가입 신청', 'rejoin', {}, 'primary')}</div>`)}`;
+};
+
+/* 운영진: 출석 관리 */
+VIEWS.attend = () => {
+  const evs = S.events.filter(e => !e.settlement).sort((a, b) => a.date.localeCompare(b.date));
+  if (!evs.length) return `<div class="empty">출석을 관리할 행사가 없습니다.</div>`;
+  if (!evs.find(e => e.id === ui.attEvent)) ui.attEvent = evs[0].id;
+  const e = ev(ui.attEvent), r = myRole();
+  const act = activeParts(e.id), att = act.filter(p => p.attended), miss = act.length - att.length;
+  const subs = [['scan', 'QR 스캔'], ['search', '이름 검색'], ['late', '늦은 출석 QR' + (lateOpen(e) ? ' · 열림' : '')], ['missing', `미출석자 ${miss}`], ['count', '인원수 대조 · 기록']];
+  if (e.type === 'postpaid') subs.unshift(['roster', '명단 구성']);
+  if (!subs.find(s => s[0] === ui.attTab)) ui.attTab = subs[0][0];
+  let lock;
+  if (e.locked) lock = `<div class="banner ok"><div><b>출석 확정됨</b> · ${esc(user(e.lockedBy)?.name)} · ${esc(e.lockedAt)}<br><span class="sm">이 명단이 정산 인원이 됩니다. 정산 탭에서 정산할 수 있습니다.</span></div>${isFinR(r) ? btn('확정 해제', 'unlock', {id:e.id}, 'ghost sm') : ''}</div>`;
+  else if (isFinR(r)) lock = `<div class="banner"><div><b>출석 최종 확정</b><br><span class="sm">확정한 명단이 정산 인원(N)이 됩니다. 지금 출석 ${att.length}명 · 미출석 ${miss}명</span></div>
+    ${confirmable('lock:' + e.id, '출석 확정', `출석 ${att.length}명으로 확정할까요?`, 'lockGo', {id:e.id})}</div>`;
+  else lock = `<div class="banner"><span class="sm">출석 최종 확정은 총무·회장이 합니다. 운영진은 체크와 수정을 할 수 있습니다.</span></div>`;
+  const body = {scan:scanBody, search:searchBody, late:lateBody, missing:missingBody, count:countBody, roster:rosterBody}[ui.attTab](e);
+  return `<div class="att-head"><div class="view-head"><h2>출석 관리</h2><p class="muted">${dlabel(e.date)} · ${e.type === 'prepaid' ? '선납형' : '후불형'}</p></div>
+    <label class="field"><span>행사</span><select id="attEvent" data-change="attEvent">${evs.map(x => `<option value="${x.id}" ${x.id === e.id ? 'selected' : ''}>${esc(x.name)} (${dlabel(x.date)})</option>`).join('')}</select></label></div>
+  <div class="tiles">
+    <div class="tile"><span class="lbl">${e.type === 'prepaid' ? '신청' : '명단'}</span><b>${act.length}</b></div>
+    ${e.type === 'prepaid' ? `<div class="tile"><span class="lbl">입금 확인</span><b>${act.filter(p => prepaidOf(p)?.confirmedAt).length}</b></div>` : `<div class="tile"><span class="lbl">손님</span><b>${act.filter(p => p.guest).length}</b></div>`}
+    <div class="tile"><span class="lbl">출석</span><b>${att.length}</b></div>
+    <div class="tile ${miss ? 'alert' : ''}"><span class="lbl">미출석</span><b>${miss}</b></div>
+  </div>
+  ${lock}
+  <div class="subtabs">${subs.map(([id, l]) => `<button type="button" class="subtab ${id === ui.attTab ? 'on' : ''}" data-act="attTab" data-id="${id}">${l}</button>`).join('')}</div>
+  <div>${body}</div>`;
+};
+function personRow(e, p, method){
+  const u = p.userId && user(p.userId);
+  return `<li class="${p.attended ? 'is-in' : ''}"><div><b>${esc(pname(p))}</b>${u ? `<span class="mono sm muted">${u.sid}</span>` : ''}
+    ${e.type === 'prepaid' ? payPill(p) : ''}${p.attended ? `<span class="sm muted">${p.checkedAt ? p.checkedAt.slice(11) : ''} ${METHOD[p.method] || ''}</span>` : ''}</div>
+    ${e.locked ? '' : btn(p.attended ? '출석 취소' : '출석', 'toggleAttend', {id:p.id, m:method}, p.attended ? 'ghost sm' : 'primary sm')}</li>`;
+}
+function scanBody(e){
+  const act = activeParts(e.id).filter(p => p.userId);
+  const notYet = act.filter(p => !p.attended), done = act.filter(p => p.attended);
+  const others = S.users.filter(u => roleOf(u.id) && !act.find(p => p.userId === u.id));
+  const opt = u => `<option value="MOIM:${u.id}">${esc(u.name)} · ${u.sid}</option>`;
+  const recent = activeParts(e.id).filter(p => p.attended && p.checkedAt).sort((a, b) => b.checkedAt.localeCompare(a.checkedAt)).slice(0, 5);
+  return `<div class="scan">
+    <div class="viewfinder" aria-hidden="true"><span></span>카메라 화면</div>
+    <div class="scan-side">
+      <p class="sm muted">실제 앱에서는 카메라가 학생 휴대폰의 QR을 읽습니다. 시연에서는 스캔할 학생을 고르고 '스캔'을 누르면 같은 검사가 실행됩니다.</p>
+      <label class="field"><span>스캔할 QR</span><select id="scanWho">
+        ${notYet.length ? `<optgroup label="출석 전 신청자">${notYet.map(p => opt(user(p.userId))).join('')}</optgroup>` : ''}
+        ${done.length ? `<optgroup label="이미 출석">${done.map(p => opt(user(p.userId))).join('')}</optgroup>` : ''}
+        ${others.length ? `<optgroup label="${e.type === 'prepaid' ? '신청하지 않은 회원' : '명단에 없는 회원 (현장 참여)'}">${others.map(opt).join('')}</optgroup>` : ''}
+      </select></label>
+      <div class="row">${btn('스캔', 'scan', {}, 'primary')}</div>
+      ${ui.scanMsg ? `<p class="msg ${ui.scanMsg.tone}">${esc(ui.scanMsg.msg)}</p>` : ''}
+    </div></div>
+    <h4>최근 출석</h4>
+    ${recent.length ? `<ul class="plist">${recent.map(p => personRow(e, p, 'qr')).join('')}</ul>` : '<p class="muted">아직 없습니다.</p>'}`;
+}
+const matchU = (u, q) => !q || (/^\d+$/.test(q) ? u.sid.endsWith(q) : /^[ㄱ-ㅎ]+$/.test(q) ? cho(u.name).includes(q) : u.name.includes(q));
+const matchP = (p, q) => p.guest ? (!q || p.guest.includes(q) || cho(p.guest).includes(q)) : matchU(user(p.userId), q);
+function searchBody(e){
+  return `<label class="field"><span>이름, 초성(예: ㄱㅁㅈ), 학번 뒷자리</span>
+    <input id="attSearch" data-input="attSearch" value="${esc(ui.search)}" autocomplete="off" placeholder="ㅌㅎㄴ 또는 학번 뒷자리"></label>
+    <div id="searchList" style="margin-top:10px">${searchList(e)}</div>`;
+}
+function searchList(e){
+  const q = ui.search.trim(), act = activeParts(e.id);
+  const rows = act.filter(p => matchP(p, q)).sort((a, b) => (a.attended - b.attended) || pname(a).localeCompare(pname(b), 'ko'));
+  let h = rows.length ? `<ul class="plist">${rows.map(p => personRow(e, p, 'search')).join('')}</ul>` : `<p class="muted">명단에서 찾지 못했습니다.</p>`;
+  if (e.type === 'postpaid' && q){
+    const extra = S.users.filter(u => roleOf(u.id) && !act.find(p => p.userId === u.id) && matchU(u, q));
+    if (extra.length) h += `<h4>명단에 없는 회원</h4><ul class="plist">${extra.map(u => `<li><div><b>${esc(u.name)}</b><span class="mono sm muted">${u.sid}</span></div>${e.locked ? '' : btn('추가하고 출석', 'addMember', {uid:u.id}, 'ghost sm')}</li>`).join('')}</ul>`;
+  }
+  return h;
+}
+function lateBody(e){
+  const lateN = activeParts(e.id).filter(p => p.method === 'late').length;
+  if (!lateOpen(e)) return `<div class="late-off">
+      <p>늦게 오는 사람을 위해 30초마다 바뀌는 QR을 이 화면에 띄워 둡니다. 학생이 직접 찍어 출석하고, 사진으로 공유된 QR은 1분이 지나면 쓸 수 없습니다.</p>
+      ${e.lateUntil ? `<p class="sm muted">${timeLabel(e.lateUntil)}에 마감되었습니다.</p>` : ''}
+      ${e.locked ? '<p class="msg">출석이 확정되어 열 수 없습니다.</p>' : `<label class="field"><span>마감 시각</span><input type="datetime-local" id="lateUntilIn" value="${dtLocal(Date.now() + 3600000)}"></label>
+      <div class="row">${btn('늦은 출석 열기', 'lateSet', {id:e.id}, 'primary')}</div>`}</div>`;
+  return `<div class="late-on">
+    <div class="late-qr"><div class="qr" id="lateQR" data-qr="MOIM-LATE:${e.id}:${lateToken(e.id, slotNow())}"></div>
+      <b class="mono code" id="lateCodeText">${lateToken(e.id, slotNow())}</b><span class="sm muted">다음 코드까지 <b id="lateCountdown" class="mono">--</b></span></div>
+    <div class="late-ctl"><p><b>마감 ${timeLabel(e.lateUntil)}</b></p>
+      <p class="sm muted">끝나는 시각이 바뀌면 행사 중에도 언제든 고칠 수 있습니다.</p>
+      <div class="row">${btn('+30분', 'lateExtend', {id:e.id}, 'ghost')}${btn('지금 마감', 'lateClose', {id:e.id}, 'ghost')}</div>
+      <label class="field"><span>마감 시각 변경</span><input type="datetime-local" id="lateUntilIn" value="${dtLocal(e.lateUntil)}"></label>
+      <div class="row">${btn('변경', 'lateSet', {id:e.id}, 'ghost')}</div>
+      <p class="sm muted">늦은 출석으로 들어온 사람 ${lateN}명. '인원수 대조 · 기록'에서 따로 표시됩니다.</p></div></div>`;
+}
+function missingBody(e){
+  const miss = activeParts(e.id).filter(p => !p.attended);
+  return `<p class="sm muted" style="margin-bottom:10px">${e.type === 'prepaid' ? '신청했지만 아직 출석하지 않은 사람입니다. 현장에 있으면 바로 체크하세요.' : '미리 참여 표시했지만 아직 출석하지 않은 사람입니다.'}</p>
+    ${miss.length ? `<ul class="plist">${miss.map(p => personRow(e, p, 'list')).join('')}</ul>` : '<div class="empty">미출석자가 없습니다.</div>'}`;
+}
+function countBody(e){
+  const att = activeParts(e.id).filter(p => p.attended);
+  let res = '';
+  if (ui.headcount !== '' && ui.headcount != null){
+    const h = +ui.headcount, a = att.length;
+    if (h === a) res = `<p class="msg ok">앱 출석 ${a}명과 실제 머릿수 ${h}명이 일치합니다.</p>`;
+    else if (a > h) res = `<p class="msg bad">앱 출석이 실제보다 ${a - h}명 많습니다. 대리 출석일 수 있으니 아래 기록에서 '늦은 출석 QR'로 들어온 사람부터 확인하세요.</p>`;
+    else res = `<div class="msg warn row"><span>실제 인원이 ${h - a}명 더 많습니다. 출석을 누르지 않은 사람이 있습니다.</span>${btn('미출석자 보기', 'attTab', {id:'missing'}, 'ghost sm')}</div>`;
+  }
+  const log = att.slice().sort((x, y) => ((y.method === 'late') - (x.method === 'late')) || (x.checkedAt || '').localeCompare(y.checkedAt || ''));
+  return `<div class="count"><label class="field"><span>운영진이 센 실제 머릿수</span><input id="headcount" type="number" inputmode="numeric" min="0" value="${esc(ui.headcount)}"></label>${btn('대조', 'headcount', {}, 'primary')}</div>
+    <div style="margin-top:10px">${res}</div>
+    <h4>출석 기록 ${att.length}명 · 누가, 언제, 어떤 방법으로</h4>
+    <div class="tbl"><table><thead><tr><th>이름</th><th>방법</th><th>체크한 사람</th><th>시각</th></tr></thead><tbody>
+    ${log.map(p => `<tr class="${p.method === 'late' ? 'hl' : ''}"><td>${esc(pname(p))}</td><td>${METHOD[p.method] || '-'}</td>
+      <td>${p.method === 'late' ? '본인' : esc(user(p.checkedBy)?.name || '-')}</td><td class="mono">${p.checkedAt ? esc(p.checkedAt.slice(5)) : '-'}</td></tr>`).join('')}
+    </tbody></table></div>`;
+}
+function rosterBody(e){
+  const L = e.linked && ev(e.linked), act = activeParts(e.id);
+  return `<div class="tools">
+    ${L ? `<div class="card"><h3>${esc(L.name)} 출석자 불러오기</h3><p class="sm muted">활동 출석자 ${activeParts(L.id).filter(p => p.attended).length}명을 한 번에 넣고, 오지 않은 사람만 뺍니다.</p>
+      <div class="row">${e.locked ? '' : btn('불러오기', 'importLinked', {id:e.id}, 'primary')}</div></div>` : ''}
+    <div class="card"><h3>손님 추가</h3><p class="sm muted">앱 계정 없이 이름만 등록합니다. 정산 후 손님이 직접 내고, 총무·회장이 바로 입금 확인합니다.</p>
+      <div class="row"><input id="guestName" autocomplete="off" placeholder="예: 졸업생 선배 김OO">${e.locked ? '' : btn('추가', 'addGuest', {id:e.id}, 'ghost')}</div></div>
+    <div class="card"><h3>회원 현장 추가</h3><p class="sm muted">QR을 스캔하거나 '이름 검색'에서 찾으면 명단에 없던 회원도 바로 추가됩니다. 활동에 오지 않은 회원도 참여할 수 있습니다.</p></div>
+  </div>
+  <h4>현재 명단 ${act.length}명 · 출석 ${act.filter(p => p.attended).length}명</h4>
+  ${act.length ? `<ul class="plist">${act.map(p => `<li class="${p.attended ? 'is-in' : ''}"><div><b>${esc(pname(p))}</b><span class="sm muted">${p.attended ? METHOD[p.method] : '출석 전'}</span></div>
+    <div class="row">${!p.attended && !e.locked ? btn('출석', 'toggleAttend', {id:p.id, m:'list'}, 'primary sm') : ''}${e.locked ? '' : btn('빼기', 'removePart', {id:p.id}, 'ghost sm')}</div></li>`).join('')}</ul>` : '<div class="empty">아직 명단이 비어 있습니다.</div>'}`;
+}
+
+/* 운영진: 행사 등록 */
+const ruleRow = (d, r) => `<div class="rule-row"><span>행사</span><input type="number" min="0" value="${d}" data-rule="days" data-input="rules" aria-label="며칠 전">
+  <span>일 전까지</span><input type="number" min="0" max="100" value="${r}" data-rule="rate" data-input="rules" aria-label="환불 비율"><span>% 환불</span>
+  <button type="button" class="btn ghost sm" data-act="delRule">삭제</button></div>`;
+VIEWS.create = () => {
+  const plus = n => { const d = new Date(today() + 'T00:00:00'); d.setDate(d.getDate() + n); return ymd(d); };
+  return `<div class="view-head"><h2>행사 등록</h2><p class="muted">운영진 누구나 등록할 수 있습니다. 환불 규칙은 행사마다 정합니다.</p></div>
+  <form class="form" data-submit="createEvent">
+    <label class="field"><span>행사 이름</span><input id="f-name" autocomplete="off" placeholder="예: 11월 정기모임"></label>
+    <fieldset class="seg"><legend>정산 방식</legend>
+      <label><input type="radio" name="ftype" id="f-pre" value="prepaid" checked data-change="ftype"> <b>선납형</b><small>참가비를 먼저 받고, 지출이 더 크면 초과분을 참석자 1/N</small></label>
+      <label><input type="radio" name="ftype" id="f-post" value="postpaid" data-change="ftype"> <b>후불형</b><small>끝난 뒤 총액 1/N · 손님 참여 가능 · 뒷풀이용</small></label>
+    </fieldset>
+    <div class="grid2"><label class="field"><span>행사 날짜</span><input type="date" id="f-date" value="${plus(14)}"></label>
+      <label class="field" data-pre><span>신청 마감</span><input type="date" id="f-deadline" value="${plus(9)}"></label></div>
+    <label class="field" data-pre><span>참가비 (원)</span><input type="number" id="f-fee" value="30000" min="0" step="1000"></label>
+    <div class="rules" data-pre><span class="field"><span>환불 규칙 (구간을 여러 개 둘 수 있음)</span></span>
+      <div id="f-rules">${ruleRow(5, 100)}</div>
+      <div class="row">${btn('구간 추가', 'addRule', {}, 'ghost sm')}</div>
+      <p class="msg sm" id="rulePreview"></p></div>
+    <label class="field" data-post hidden><span>연결된 활동 (출석자 불러오기용)</span><select id="f-linked"><option value="">없음</option>
+      ${S.events.filter(x => x.type === 'prepaid').map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select></label>
+    <p id="f-err" class="msg bad" hidden></p>
+    <div class="row"><button type="submit" class="btn primary">행사 등록</button></div>
+  </form>`;
+};
+function readRules(){
+  const rows = [...document.querySelectorAll('#f-rules .rule-row')];
+  const out = [];
+  for (const r of rows){
+    const days = parseInt(r.querySelector('[data-rule="days"]').value, 10), rate = parseInt(r.querySelector('[data-rule="rate"]').value, 10);
+    if (!(days >= 0) || !(rate >= 0 && rate <= 100)) return null;
+    out.push({days, rate});
+  }
+  return out;
+}
+function updateRulePreview(){
+  const el = $('#rulePreview'); if (!el) return;
+  const rules = readRules();
+  el.textContent = rules === null ? '일수는 0 이상, 비율은 0~100으로 입력하세요.' : '학생에게 이렇게 보입니다: ' + ruleText({type:'prepaid', rules});
+}
+
+/* 총무·회장: 입금·환불 */
+VIEWS.money = () => {
+  const pend = S.pays.filter(m => m.reportedAt && !m.confirmedAt && m.kind !== 'refund');
+  const cx = S.parts.filter(p => p.status === 'cancelRequested');
+  const unpaid = S.pays.filter(m => (m.kind === 'extra' || m.kind === 'postpaid') && !m.confirmedAt);
+  const row = m => { const p = S.parts.find(x => x.id === m.partId), e = ev(p.eventId), nm = pname(p);
+    return `<tr><td><input type="checkbox" data-pay="${m.id}" aria-label="${esc(nm)} 선택"></td><td>${esc(nm)}</td><td>${esc(e.name)}</td><td>${KIND_LABEL[m.kind]}</td>
+      <td class="num">${won(m.amount)}</td><td>${esc(m.payer)} ${p.userId && m.payer !== user(p.userId).name ? pill('이름 다름', 'warn') : ''}</td><td>${dlabel(m.reportedAt)}</td>
+      <td>${btn('확인', 'confirmPay', {id:m.id}, 'primary sm')}</td></tr>`; };
+  return `<div class="view-head"><h2>입금 · 환불</h2><p class="muted">학생의 '입금했어요'와 운영진 확인은 따로 기록됩니다. 통장 내역과 대조한 뒤 확인하세요.</p></div>
+  <section><h4>입금 확인 대기 ${pend.length}건</h4>
+    ${pend.length ? `<div class="tbl"><table><thead><tr><th><input type="checkbox" data-change="selAll" data-group="pay" aria-label="모두 선택"></th><th>이름</th><th>행사</th><th>종류</th><th class="num">금액</th><th>입금자명</th><th>표시일</th><th></th></tr></thead>
+      <tbody>${pend.map(row).join('')}</tbody></table></div><div class="row" style="margin-top:8px">${btn('선택한 항목 확인', 'confirmSel', {}, 'ghost')}</div>` : '<div class="empty">확인할 입금이 없습니다.</div>'}
+  </section>
+  <section><h4>취소 요청 ${cx.length}건</h4>
+    ${cx.length ? `<div class="tbl"><table><thead><tr><th>이름</th><th>행사</th><th>요청일</th><th>행사까지</th><th>환불 비율</th><th class="num">환불액</th><th></th></tr></thead><tbody>
+    ${cx.map(p => { const e = ev(p.eventId), pp = prepaidOf(p), ok = pp && pp.confirmedAt, amt = pp ? Math.floor(pp.amount * p.refundRate / 100) : 0;
+      return `<tr><td>${esc(pname(p))}</td><td>${esc(e.name)}</td><td>${dlabel(p.cancelReqAt)}</td><td>${daysBetween(p.cancelReqAt, e.date)}일 전</td><td>${p.refundRate}%</td>
+      <td class="num">${won(amt)}</td><td><div class="row">${ok ? btn(amt ? '환불 완료 처리' : '취소 처리 (환불 없음)', 'approveCancel', {id:p.id}, 'primary sm') : '<span class="sm muted">입금 확인 먼저</span>'}${btn('거절', 'rejectCancel', {id:p.id}, 'ghost sm')}</div></td></tr>`; }).join('')}
+    </tbody></table></div>` : '<div class="empty">취소 요청이 없습니다.</div>'}
+  </section>
+  <section><h4>정산 후 미납 ${unpaid.length}건</h4>
+    ${unpaid.length ? `<div class="tbl"><table><thead><tr><th>이름</th><th>행사</th><th>종류</th><th class="num">금액</th><th>상태</th><th></th></tr></thead><tbody>
+    ${unpaid.map(m => { const p = S.parts.find(x => x.id === m.partId);
+      return `<tr><td>${esc(pname(p))}</td><td>${esc(ev(p.eventId).name)}</td><td>${KIND_LABEL[m.kind]}</td><td class="num">${won(m.amount)}</td>
+      <td>${m.reportedAt ? pill('입금 표시함', 'info') : pill('미입금', 'bad')}</td><td>${btn(p.guest ? '바로 확인 (손님)' : '확인', 'confirmPay', {id:m.id}, 'ghost sm')}</td></tr>`; }).join('')}
+    </tbody></table></div>` : '<div class="empty">미납자가 없습니다.</div>'}
+  </section>`;
+};
+
+/* 총무·회장: 정산 */
+VIEWS.settle = () => {
+  const evs = [...S.events].sort((a, b) => b.date.localeCompare(a.date));
+  if (!ev(ui.settleEvent)) ui.settleEvent = evs[0].id;
+  const e = ev(ui.settleEvent);
+  const chips = evs.map(x => { const st = x.settlement ? ['정산 완료', 'ok'] : x.locked ? ['정산 가능', 'info'] : ['출석 확정 전', ''];
+    return `<button type="button" class="chip ${x.id === e.id ? 'on' : ''}" data-act="pickSettle" data-id="${x.id}"><b>${esc(x.name)}</b>${pill(st[0], st[1])}</button>`; }).join('');
+  let body;
+  if (e.settlement) body = settleResult(e);
+  else if (!e.locked) body = `<div class="banner"><div><b>출석을 먼저 확정해야 합니다</b><br><span class="sm">확정된 출석 명단이 정산 인원(N)이 됩니다.</span></div>${btn('출석 관리로 이동', 'go', {persona:ui.persona, tab:'attend', ev:e.id}, 'ghost sm')}</div>`;
+  else body = `<div class="count"><label class="field"><span>실제 총지출 (원)</span><input id="spent" type="number" inputmode="numeric" min="0" step="1" data-input="spent" value="${esc(ui.spent[e.id] ?? '')}" placeholder="예: 1500000"></label></div>
+    <div id="settlePreview">${settlePreview(e)}</div>`;
+  return `<div class="view-head"><h2>정산</h2><p class="muted">${e.type === 'prepaid' ? '선납형: 지출이 확보금보다 크면 초과분을 참석자 1/N, 남으면 회비로 이월' : '후불형: 총지출을 참석자(손님 포함) 1/N'} · 1원 미만 버림</p></div>
+    <div class="chips">${chips}</div>${body}`;
+};
+function calcTable(e, c, spent){
+  const L = [];
+  if (e.type === 'prepaid'){
+    L.push(['확인된 선납금', `${c.paidCount}건`, won(c.confirmedSum)]);
+    if (c.refundSum) L.push(['환불', '취소 요청 승인분', '−' + won(c.refundSum)]);
+    L.push(['확보금', '선납금 − 환불 (불참자 선납금 포함)', won(c.secured)]);
+    L.push(['실제 총지출', '', won(spent)]);
+    L.push([c.short > 0 ? '부족분' : '남은 금액', '총지출 − 확보금', won(Math.abs(c.short))]);
+  } else L.push(['실제 총지출', '', won(spent)]);
+  L.push(['정산 인원 N', e.type === 'prepaid' ? '확정된 출석자 (운영진 포함)' : `회원 ${c.memberN}명 + 손님 ${c.guestN}명`, c.N + '명']);
+  let total;
+  if (c.short > 0 && c.N > 0){
+    L.push(['걷히는 금액', `${won(c.per)} × ${c.N}명`, won(c.per * c.N)]);
+    L.push(['버림 차액', '회비에서 부담', c.gap ? '−' + won(c.gap) : '0원']);
+    total = ['1인당 금액', `${won(c.short)} ÷ ${c.N} = ${(c.short / c.N).toLocaleString('ko-KR', {maximumFractionDigits:3})} → 1원 미만 버림`, won(c.per)];
+  } else total = ['1인당 추가금', `선납금으로 충당, ${won(c.carry)} 회비로 이월`, '0원'];
+  return `<div class="tbl calc"><table><tbody>${L.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td class="num">${r[2]}</td></tr>`).join('')}
+    <tr class="total"><td>${total[0]}</td><td>${total[1]}</td><td class="num">${total[2]}</td></tr></tbody></table></div>`;
+}
+function settlePreview(e){
+  const spent = parseInt(ui.spent[e.id], 10);
+  if (!(spent > 0)) return `<p class="muted">총지출을 입력하면 계산 과정이 바로 나옵니다.</p>`;
+  const c = calcSettlement(e, spent);
+  if (!c.N) return `<p class="msg bad">출석자가 없어 정산할 수 없습니다.</p>`;
+  const warn = c.unpaidAtt.length ? `<p class="msg warn">출석했지만 선납금 입금이 확인되지 않은 사람: ${c.unpaidAtt.map(p => esc(pname(p))).join(', ')}. 입금·환불 탭에서 먼저 확인하세요.</p>` : '';
+  const q = c.per > 0 ? `1인당 ${won(c.per)}으로 확정할까요? 확정 후에는 바꿀 수 없습니다.` : `추가금 없이 ${won(c.carry)}을 이월할까요?`;
+  return `<div style="display:grid;gap:10px;margin-top:6px">${warn}${calcTable(e, c, spent)}<div class="row">${confirmable('settle:' + e.id, '정산 확정', q, 'settleGo', {id:e.id})}</div></div>`;
+}
+function noticeText(e){
+  const s = e.settlement, names = partsOf(e.id).filter(p => isActive(p) && p.attended).map(p => pname(p).replace(' (손님)', '(손님)'));
+  const lines = [`[${e.name} 정산 안내]`];
+  if (e.type === 'prepaid'){
+    lines.push(`총지출 ${won(s.spent)} / 확보한 선납금 ${won(s.secured)}`);
+    if (s.per > 0){
+      lines.push(`부족한 ${won(s.short)}을 참석자 ${s.N}명이 나눕니다.`);
+      lines.push(`1인당 추가금: ${won(s.per)}` + (s.gap ? ` (1원 미만 버림, 차액 ${won(s.gap)}은 회비에서 부담)` : ''));
+    } else lines.push(`선납금으로 모두 충당되어 추가금은 없습니다. 남은 ${won(s.carry)}은 회비로 이월합니다.`);
+  } else {
+    lines.push(`총지출 ${won(s.spent)} ÷ ${s.N}명`);
+    lines.push(`1인당: ${won(s.per)}` + (s.gap ? ` (1원 미만 버림, 차액 ${won(s.gap)}은 회비에서 부담)` : ''));
+  }
+  if (s.per > 0){ lines.push(`입금 계좌: ${S.settings.account}`); lines.push(`입금 후 앱에서 '입금했어요'를 눌러 주세요.`); }
+  lines.push('', `대상자 (${names.length}명): ${names.join(', ')}`);
+  return lines.join('\n');
+}
+function settleResult(e){
+  const s = e.settlement;
+  const charges = partsOf(e.id).flatMap(p => paysOf(p.id).filter(m => m.kind === 'extra' || m.kind === 'postpaid').map(m => ({m, p})));
+  const paid = charges.filter(x => x.m.confirmedAt).length;
+  return `<div class="tiles">
+      <div class="tile"><span class="lbl">1인당</span><b>${won(s.per)}</b></div>
+      <div class="tile"><span class="lbl">정산 인원</span><b>${s.N}명</b></div>
+      <div class="tile"><span class="lbl">${s.carry ? '회비 이월' : '회비 부담 (버림 차액)'}</span><b>${s.carry ? '+' + won(s.carry) : s.gap ? '−' + won(s.gap) : '0원'}</b></div>
+      <div class="tile ${charges.length - paid ? 'alert' : ''}"><span class="lbl">입금 확인</span><b>${paid}/${charges.length}</b></div></div>
+    <p class="sm muted">${dlabel(s.at)} ${esc(user(s.by)?.name)} 확정</p>
+    ${calcTable(e, s, s.spent)}
+    <section class="card"><h3>카톡방 안내문</h3><p class="sm muted">복사해서 단톡방에 붙여 넣으세요. (카톡 자동 발송은 이후 단계)</p>
+      <textarea id="notice" rows="8" readonly>${esc(noticeText(e))}</textarea><div class="row">${btn('안내문 복사', 'copy', {target:'notice'}, 'primary')}</div></section>
+    ${charges.length ? `<h4>입금 현황</h4><ul class="plist">${charges.map(({m, p}) => `<li class="${m.confirmedAt ? 'is-in' : ''}"><div><b>${esc(pname(p))}</b><span class="mono sm">${won(m.amount)}</span>
+      ${m.confirmedAt ? pill('확인', 'ok') : m.reportedAt ? pill('입금 표시함', 'info') : pill('미입금', 'bad')}</div>${m.confirmedAt ? '' : btn(p.guest ? '바로 확인 (손님)' : '확인', 'confirmPay', {id:m.id}, 'ghost sm')}</li>`).join('')}</ul>` : ''}`;
+}
+
+/* 총무·회장: 회원 */
+VIEWS.members = () => {
+  const pending = S.ms.filter(m => m.sem === CUR && m.status === 'pending');
+  const approved = S.ms.filter(m => m.sem === CUR && m.status === 'approved');
+  const noKakao = approved.filter(m => !m.kakao);
+  const by = r => approved.filter(m => m.role === r).length;
+  return `<div class="view-head"><h2>${SEMS[CUR]} 회원</h2><p class="muted">회원 ${approved.length}명 · 회장 ${by('president')} · 총무 ${by('treasurer')} · 운영진 ${by('staff')} · 회원 ${by('member')}. 학기마다 다시 가입합니다.</p></div>
+  <section><h4>가입 신청 ${pending.length}건</h4>
+    ${pending.length ? `<div class="tbl"><table><thead><tr><th><input type="checkbox" data-change="selAll" data-group="mem" aria-label="모두 선택"></th><th>이름</th><th>학번</th><th>학과</th><th>연락처</th><th>신청일</th><th>구분</th></tr></thead><tbody>
+      ${pending.map(m => { const u = user(m.userId); return `<tr><td><input type="checkbox" data-mem="${u.id}" aria-label="${esc(u.name)} 선택"></td><td>${esc(u.name)}</td><td class="mono">${u.sid}</td><td>${esc(u.dept)}</td><td class="mono">${esc(u.phone)}</td><td>${dlabel(m.appliedAt)}</td><td>${mem(u.id, PREV) ? pill('재가입', 'info') : pill('신입', 'type')}</td></tr>`; }).join('')}
+    </tbody></table></div><div class="row" style="margin-top:8px">${btn('선택 승인', 'approveSel', {}, 'primary')}${btn('선택 거절', 'rejectSel', {}, 'ghost')}</div>` : '<div class="empty">새 가입 신청이 없습니다.</div>'}
+  </section>
+  <section><h4>카톡방 초대 필요 ${noKakao.length}명</h4>
+    ${noKakao.length ? `<ul class="plist">${noKakao.map(m => { const u = user(m.userId); return `<li><div><b>${esc(u.name)}</b><span class="mono sm muted">${esc(u.phone)}</span></div>${btn('초대 완료', 'kakao', {uid:u.id}, 'ghost sm')}</li>`; }).join('')}</ul>
+      <p class="sm muted" style="margin-top:6px">카카오는 외부 앱이 일반 단톡방에 사람을 넣는 기능을 열어 두지 않아서, 초대는 직접 하고 여기서 체크만 합니다.</p>` : '<div class="empty">모두 초대했습니다.</div>'}
+  </section>
+  <section><h4>전체 회원과 권한</h4>
+    <div class="tbl"><table><thead><tr><th>이름</th><th>학번</th><th>학과</th><th>역할</th><th>카톡방</th></tr></thead><tbody>
+    ${approved.map(m => { const u = user(m.userId);
+      return `<tr><td>${esc(u.name)}</td><td class="mono">${u.sid}</td><td>${esc(u.dept)}</td>
+      <td>${isFinR(m.role) ? pill(ROLE_LABEL[m.role], 'type') : `<select data-change="role" data-uid="${u.id}" id="role-${u.id}" aria-label="${esc(u.name)} 역할"><option value="member" ${m.role === 'member' ? 'selected' : ''}>회원</option><option value="staff" ${m.role === 'staff' ? 'selected' : ''}>운영진 (출석 권한 포함)</option></select>`}</td>
+      <td>${m.kakao ? pill('초대함', 'ok') : pill('초대 전', 'warn')}</td></tr>`; }).join('')}
+    </tbody></table></div>
+  </section>`;
+};
+
+/* 총무·회장: 장부·설정 */
+VIEWS.ledger = () => {
+  const sum = S.ledger.reduce((a, x) => a + x.amount, 0);
+  return `<div class="view-head"><h2>회비 장부 · 설정</h2><p class="muted">정산에서 생긴 이월금과 버림 차액이 자동으로 기록됩니다.</p></div>
+  <div class="tbl"><table><thead><tr><th>날짜</th><th>내용</th><th class="num">금액</th></tr></thead><tbody>
+    ${S.ledger.length ? S.ledger.map(x => `<tr><td>${dlabel(x.date)}</td><td>${esc(x.desc)}</td><td class="num">${x.amount > 0 ? '+' : '−'}${won(Math.abs(x.amount))}</td></tr>`).join('') : '<tr><td colspan="3" class="muted">기록이 없습니다.</td></tr>'}
+    <tr class="hl"><td></td><td><b>정산으로 인한 회비 증감 합계</b></td><td class="num"><b>${sum >= 0 ? '+' : '−'}${won(Math.abs(sum))}</b></td></tr>
+  </tbody></table></div>
+  <div class="cols">
+    ${card('동아리 계좌', `<p class="sm muted">계좌는 하나만 쓰므로 여기서 한 번만 정합니다. 모든 행사의 입금 안내에 쓰입니다.</p>
+      <label class="field"><span>계좌</span><input id="acct" value="${esc(S.settings.account)}"></label><div class="row">${btn('저장', 'saveAcct', {}, 'primary')}</div>`)}
+    ${card('시연 기준일', `<p class="sm muted">신청 마감과 환불 비율은 '오늘' 날짜로 계산됩니다. 시연에서 날짜를 바꿔 환불 규칙이 바뀌는 모습을 보여 줄 수 있습니다.</p>
+      <label class="field"><span>오늘로 볼 날짜</span><input type="date" id="demoToday" value="${today()}"></label>
+      <div class="row">${btn('적용', 'setToday', {}, 'primary')}${btn('실제 오늘로', 'resetToday', {}, 'ghost')}</div>`)}
+    ${card('시연 데이터', `<p class="sm muted">이 브라우저에만 저장됩니다. 시연 전에 처음 상태로 되돌리세요.</p>
+      <div class="row">${confirmable('reset', '처음 상태로 되돌리기', '지금까지 바꾼 내용이 모두 사라집니다. 되돌릴까요?', 'resetData', {}, 'ghost')}</div>`)}
+  </div>`;
+};
+
+/* 시연 순서 */
+const GUIDE = [
+  ['동아리 가입과 학기 재가입', "구글폼 대신 앱에서 가입을 신청합니다. 총무·회장이 여러 명을 한 번에 승인하고, 카톡방 초대 여부를 체크합니다.",
+    [['새로 가입하는 사람', '__new', 'join'], ['지난 학기 회원 마현빈', 'u45', 'join'], ['총무 이하은 · 회원 탭', 'u1', 'members']]],
+  ['행사 신청과 입금 확인', "김민지가 가을 MT에 '입금했어요'를 누르면, 총무가 통장 내역과 대조해 확인합니다. 학생 표시와 운영진 확인은 따로 기록됩니다. 입금자명이 다른 사람은 표시됩니다.",
+    [['회원 김민지 · 가을 MT', 'u5', 'events', 'e-mt'], ['총무 이하은 · 입금·환불', 'u1', 'money']]],
+  ['환불 규칙', "가을 MT는 '7일 전까지 100%, 5일 전까지 50%' 규칙입니다. 장부·설정에서 시연 기준일을 11월 1일, 11월 3일로 바꾼 뒤 김민지 화면의 예상 환불액이 바뀌는 것을 보여 주세요. 안다인의 취소 요청은 총무가 승인합니다.",
+    [['총무 이하은 · 장부·설정', 'u1', 'ledger'], ['회원 김민지 · 가을 MT', 'u5', 'events', 'e-mt']]],
+  ['출석: QR 스캔 · 늦은 출석 · 검색', "운영진이 할로윈 정기모임에서 김민지의 QR을 스캔합니다. '늦은 출석 QR'을 연 뒤 변재윤으로 바꿔 코드를 넣고, '1분 전 사진 속 코드'는 거절되는 것을 보여 주세요. 탁하늘은 이름 검색에서 초성 ㅌㅎㄴ으로 찾습니다.",
+    [['운영진 최도윤 · 출석 관리', 'u2', 'attend', 'e-oct'], ['회원 김민지 · 내 QR', 'u5', 'events', 'e-oct'], ['회원 변재윤 · 늦은 출석', 'u37', 'events', 'e-oct']]],
+  ['누락 확인과 출석 확정', "미출석자 목록과 인원수 대조로 출석 누락을 찾습니다. 실제 머릿수 37을 넣어 보세요. 총무가 출석을 확정하면 그 명단이 정산 인원이 됩니다.",
+    [['총무 이하은 · 출석 관리', 'u1', 'attend', 'e-oct']]],
+  ['정산', "총지출 1,500,000원을 넣으면 (1,500,000 − 1,170,000) ÷ 37 = 8,918.9…이므로 1인당 8,918원, 버림 차액 34원은 회비에서 부담합니다. 확정 후 카톡 안내문을 복사합니다.",
+    [['총무 이하은 · 정산', 'u1', 'settle', 'e-oct']]],
+  ['뒷풀이: 후불 1/N과 손님', "활동 출석자를 불러오고, 오지 않은 사람은 빼고, 손님을 추가합니다. 출석 확정 후 정산하면 손님까지 1/N이고, 손님 입금은 총무가 바로 확인합니다.",
+    [['운영진 최도윤 · 뒷풀이 명단', 'u2', 'attend', 'e-oct-after'], ['총무 이하은 · 정산', 'u1', 'settle', 'e-oct-after']]],
+  ['미납자', "정산이 끝난 개강총회에 추가금 미납자가 남아 있습니다. 목록으로만 보여 줍니다.",
+    [['총무 이하은 · 입금·환불', 'u1', 'money']]],
+];
+VIEWS.guide = () => `<div class="view-head"><h2>시연 순서</h2><p class="muted">버튼을 누르면 해당 인물과 화면으로 바로 이동합니다. 위쪽 '시연 인물'에서 언제든 사람을 바꿀 수 있습니다. 데이터는 이 브라우저에만 저장되며, 장부·설정에서 처음 상태로 되돌릴 수 있습니다.</p></div>
+  <ol class="guide" style="list-style:none;margin:0;padding:0">${GUIDE.map(([t, d, go], i) => `<li class="card"><h3>${i + 1}. ${t}</h3><p>${d}</p>
+    <div class="row">${go.map(([l, persona, tab, evId]) => btn(l, 'go', {persona, tab, ev:evId || ''}, 'ghost sm')).join('')}</div></li>`).join('')}</ol>`;
+
+/* ---------- 5) 버튼 동작 ---------- */
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2800); }
+const findPart = id => S.parts.find(p => p.id === id);
+const findPay = id => S.pays.find(m => m.id === id);
+const showErr = (id, msg) => { const el = $('#' + id); el.textContent = msg; el.hidden = false; };
+
+const ACT = {
+  tab: d => { ui.tab = d.id; ui.eventId = null; ui.confirm = null; render(); },
+  go: d => { ui.persona = d.persona; ui.tab = d.tab; ui.confirm = null; ui.scanMsg = null; ui.lateMsg = null; ui.eventId = null;
+    if (d.tab === 'events' && d.ev) ui.eventId = d.ev;
+    if (d.tab === 'attend' && d.ev){ ui.attEvent = d.ev; ui.attTab = ev(d.ev).type === 'postpaid' ? 'roster' : 'scan'; }
+    if (d.tab === 'settle' && d.ev) ui.settleEvent = d.ev;
+    render(); scrollTo(0, 0); },
+  openEvent: d => { ui.eventId = d.id; ui.confirm = null; ui.lateMsg = null; render(); scrollTo(0, 0); },
+  back: () => { ui.eventId = null; render(); },
+  ask: d => { ui.confirm = d.key; render(); },
+  unask: () => { ui.confirm = null; render(); },
+  copy: d => {
+    const el = d.target ? $('#' + d.target) : null, text = el ? el.value : d.text;
+    const fail = () => { if (el){ el.focus(); el.select(); toast('복사가 막혀 있어 내용을 선택해 두었습니다. Ctrl+C로 복사하세요.'); } else toast(text); };
+    try { navigator.clipboard.writeText(text).then(() => toast('복사했습니다.'), fail); } catch(e) { fail(); }
+  },
+
+  // 학생
+  apply: d => { const e = ev(d.id); const p = ensurePart(e.id, ui.persona); Object.assign(p, {appliedAt:today(), cancelReqAt:null, refundRate:null});
+    toast(e.type === 'prepaid' ? '신청했습니다. 참가비를 입금해 주세요.' : '참여 예정으로 표시했습니다.'); render(); },
+  cancelDirect: d => { const p = partOf(d.id, ui.persona); p.status = 'cancelled'; unmark(p); ui.confirm = null; toast('취소했습니다.'); render(); },
+  reportPay: d => { const e = ev(d.id), p = partOf(e.id, ui.persona); const payer = ($('#payer')?.value || '').trim() || me().name;
+    S.pays.push({id:uid('m'), partId:p.id, kind:'prepaid', amount:e.fee, payer, reportedAt:today(), confirmedAt:null, confirmedBy:null});
+    toast('입금 표시를 했습니다. 총무·회장이 확인하면 상태가 바뀝니다.'); render(); },
+  requestCancel: d => { const e = ev(d.id), p = partOf(e.id, ui.persona);
+    Object.assign(p, {status:'cancelRequested', cancelReqAt:today(), refundRate:refundRate(e, today())}); ui.confirm = null; toast('취소를 요청했습니다.'); render(); },
+  reportCharge: d => { const m = findPay(d.id); m.reportedAt = today(); m.payer = me().name; toast('입금 표시를 했습니다.'); render(); },
+  lateFill: d => { $('#lateCode').value = lateToken(d.id, slotNow()); },
+  lateFillOld: d => { $('#lateCode').value = lateToken(d.id, slotNow() - 2); },
+  lateCheckin: d => { const e = ev(d.id); ui.lateMsg = checkLate(e, ui.persona, ($('#lateCode').value || '').trim().toUpperCase()); if (ui.lateMsg.ok) toast('출석했습니다.'); render(); },
+  rejoin: () => {
+    if (!$('#jn-agree').checked) return showErr('jn-err', '정보 수집에 동의해야 신청할 수 있습니다.');
+    const old = mem(ui.persona);
+    if (old) Object.assign(old, {status:'pending', appliedAt:today()});
+    else S.ms.push({userId:ui.persona, sem:CUR, role:'member', status:'pending', kakao:false, appliedAt:today()});
+    toast('가입을 신청했습니다.'); render(); },
+  signup: () => {
+    const name = $('#su-name').value.trim(), sid = $('#su-sid').value.trim(), dept = $('#su-dept').value.trim(), phone = $('#su-phone').value.trim();
+    if (!name) return showErr('su-err', '이름을 입력하세요.');
+    if (!/^\d{8,10}$/.test(sid)) return showErr('su-err', '학번은 숫자 8~10자리로 입력하세요.');
+    if (S.users.some(u => u.sid === sid)) return showErr('su-err', '이미 계정이 있는 학번입니다. 위쪽 시연 인물에서 그 사람을 고르세요.');
+    if (!$('#su-agree').checked) return showErr('su-err', '정보 수집에 동의해야 신청할 수 있습니다.');
+    const u = {id:uid('u'), name, sid, dept:dept || '-', phone:phone || '-'};
+    S.users.push(u); S.ms.push({userId:u.id, sem:CUR, role:'member', status:'pending', kakao:false, appliedAt:today()});
+    ui.persona = u.id; toast(`${name}님 가입 신청이 접수되었습니다.`); render(); },
+
+  // 운영진: 출석
+  attTab: d => { ui.attTab = d.id; ui.scanMsg = null; render(); },
+  scan: () => { ui.scanMsg = doScan(ev(ui.attEvent), $('#scanWho')?.value); render(); },
+  toggleAttend: d => { const p = findPart(d.id), e = ev(p.eventId);
+    if (e.locked) return toast('출석이 확정되어 고칠 수 없습니다.');
+    p.attended ? unmark(p) : mark(p, d.m || 'search'); render(); },
+  addMember: d => { const e = ev(ui.attEvent); if (e.locked) return; mark(ensurePart(e.id, d.uid), 'search'); toast(`${user(d.uid).name}님을 추가하고 출석 처리했습니다.`); render(); },
+  headcount: () => { ui.headcount = $('#headcount').value; render(); },
+  lateSet: d => { const e = ev(d.id), v = Date.parse($('#lateUntilIn').value);
+    if (!(v > Date.now())) return toast('마감 시각은 지금보다 뒤여야 합니다.');
+    e.lateUntil = v; toast(`늦은 출석 마감: ${timeLabel(v)}`); render(); },
+  lateExtend: d => { const e = ev(d.id); e.lateUntil += 30 * 60000; toast(`마감을 ${timeLabel(e.lateUntil)}로 늦췄습니다.`); render(); },
+  lateClose: d => { const e = ev(d.id); e.lateUntil = Date.now() - 1; toast('늦은 출석을 마감했습니다.'); render(); },
+  importLinked: d => { const e = ev(d.id), L = ev(e.linked); let n = 0;
+    activeParts(L.id).filter(p => p.attended && p.userId).forEach(lp => {
+      const p = partOf(e.id, lp.userId); if (p && isActive(p) && p.attended) return;
+      mark(ensurePart(e.id, lp.userId), 'import'); n++; });
+    toast(n ? `${n}명을 불러왔습니다. 오지 않은 사람은 '빼기'를 누르세요.` : '새로 불러올 사람이 없습니다.'); render(); },
+  addGuest: d => { const name = $('#guestName').value.trim(); if (!name) return toast('손님 이름을 입력하세요.');
+    const p = {id:uid('p'), eventId:d.id, userId:null, guest:name, status:'applied', appliedAt:today(), attended:false, method:null, checkedBy:null, checkedAt:null, cancelReqAt:null, refundRate:null};
+    mark(p, 'manual'); S.parts.push(p); toast(`손님 ${name}님을 추가했습니다.`); render(); },
+  removePart: d => { const p = findPart(d.id); p.status = 'cancelled'; unmark(p); render(); },
+  lockGo: d => { Object.assign(ev(d.id), {locked:true, lockedBy:ui.persona, lockedAt:stamp()}); ui.confirm = null; toast('출석을 확정했습니다. 정산 탭에서 정산할 수 있습니다.'); render(); },
+  unlock: d => { Object.assign(ev(d.id), {locked:false, lockedBy:null, lockedAt:null}); toast('확정을 해제했습니다.'); render(); },
+
+  // 운영진: 행사 등록
+  addRule: () => { $('#f-rules').insertAdjacentHTML('beforeend', ruleRow(3, 0)); updateRulePreview(); },
+  delRule: (d, t) => { t.closest('.rule-row').remove(); updateRulePreview(); },
+  createEvent: () => {
+    const name = $('#f-name').value.trim(), type = $('#f-post').checked ? 'postpaid' : 'prepaid', date = $('#f-date').value;
+    if (!name) return showErr('f-err', '행사 이름을 입력하세요.');
+    if (!date) return showErr('f-err', '행사 날짜를 고르세요.');
+    const e = {id:uid('e'), name, type, date, fee:0, deadline:date, rules:[], linked:null, lateUntil:null, locked:false, lockedBy:null, lockedAt:null, settlement:null};
+    if (type === 'prepaid'){
+      e.fee = parseInt($('#f-fee').value, 10); e.deadline = $('#f-deadline').value; e.rules = readRules();
+      if (!(e.fee > 0)) return showErr('f-err', '참가비를 입력하세요.');
+      if (!e.deadline || e.deadline > date) return showErr('f-err', '신청 마감은 행사 날짜와 같거나 빨라야 합니다.');
+      if (e.rules === null) return showErr('f-err', '환불 규칙의 일수와 비율(0~100)을 확인하세요.');
+    } else e.linked = $('#f-linked').value || null;
+    S.events.push(e); ui.tab = 'events'; ui.eventId = e.id; toast(`'${name}' 행사를 등록했습니다.`); render(); scrollTo(0, 0); },
+
+  // 총무·회장
+  confirmPay: d => { const m = findPay(d.id), p = findPart(m.partId);
+    Object.assign(m, {confirmedAt:today(), confirmedBy:ui.persona, reportedAt:m.reportedAt || today(), payer:m.payer || pname(p)});
+    toast(`${pname(p)} ${won(m.amount)} 입금을 확인했습니다.`); render(); },
+  confirmSel: () => { const ids = [...document.querySelectorAll('input[data-pay]:checked')].map(c => c.dataset.pay);
+    if (!ids.length) return toast('확인할 항목을 선택하세요.');
+    ids.forEach(id => Object.assign(findPay(id), {confirmedAt:today(), confirmedBy:ui.persona})); toast(`${ids.length}건을 확인했습니다.`); render(); },
+  approveCancel: d => { const p = findPart(d.id), pp = prepaidOf(p), amt = Math.floor(pp.amount * p.refundRate / 100);
+    if (amt > 0){ S.pays.push({id:uid('m'), partId:p.id, kind:'refund', amount:amt, payer:null, reportedAt:null, confirmedAt:today(), confirmedBy:ui.persona}); p.status = 'refunded'; }
+    else p.status = 'cancelled';
+    toast(amt ? `${pname(p)}님에게 ${won(amt)} 환불 처리했습니다.` : `${pname(p)}님 취소를 처리했습니다 (환불 없음).`); render(); },
+  rejectCancel: d => { Object.assign(findPart(d.id), {status:'applied', cancelReqAt:null, refundRate:null}); toast('취소 요청을 거절했습니다.'); render(); },
+  pickSettle: d => { ui.settleEvent = d.id; ui.confirm = null; render(); },
+  settleGo: d => { const e = ev(d.id), spent = parseInt(ui.spent[e.id], 10);
+    if (!(spent > 0) || !calcSettlement(e, spent).N) return toast('총지출과 출석자를 확인하세요.');
+    settleEvent(e, spent, ui.persona, today()); ui.confirm = null; toast('정산을 확정했습니다. 안내문을 복사해 단톡방에 올리세요.'); render(); },
+  approveSel: () => { const ids = [...document.querySelectorAll('input[data-mem]:checked')].map(c => c.dataset.mem);
+    if (!ids.length) return toast('승인할 사람을 선택하세요.');
+    ids.forEach(id => Object.assign(mem(id), {status:'approved', kakao:false})); toast(`${ids.length}명을 승인했습니다. 카톡방에 초대해 주세요.`); render(); },
+  rejectSel: () => { const ids = [...document.querySelectorAll('input[data-mem]:checked')].map(c => c.dataset.mem);
+    if (!ids.length) return toast('거절할 사람을 선택하세요.');
+    ids.forEach(id => mem(id).status = 'rejected'); toast(`${ids.length}명을 거절했습니다.`); render(); },
+  kakao: d => { mem(d.uid).kakao = true; render(); },
+  saveAcct: () => { S.settings.account = $('#acct').value.trim() || S.settings.account; toast('계좌를 저장했습니다.'); render(); },
+  setToday: () => { S.settings.today = $('#demoToday').value || null; toast(`기준일을 ${dlabel(today())}로 바꿨습니다.`); render(); },
+  resetToday: () => { S.settings.today = null; toast('실제 오늘 날짜로 돌아왔습니다.'); render(); },
+  resetData: () => { seed(); ui = {...ui, persona:'u5', tab:'guide', eventId:null, attEvent:'e-oct', attTab:'scan', settleEvent:'e-oct', confirm:null, search:'', headcount:'', scanMsg:null, lateMsg:null, spent:{}};
+    toast('시연 데이터를 처음 상태로 되돌렸습니다.'); render(); },
+};
+
+/* 입력이 바뀔 때 (선택 상자, 체크박스) */
+const CHG = {
+  persona: t => { ui.persona = t.value; ui.eventId = null; ui.confirm = null; ui.lateMsg = null; ui.scanMsg = null; render(); },
+  attEvent: t => { ui.attEvent = t.value; ui.scanMsg = null; ui.search = ''; ui.headcount = ''; render(); },
+  role: t => { mem(t.dataset.uid).role = t.value; toast(`${user(t.dataset.uid).name}: ${ROLE_LABEL[t.value]}`); render(); },
+  selAll: t => document.querySelectorAll(`input[data-${t.dataset.group}]`).forEach(c => c.checked = t.checked),
+  ftype: () => { const post = $('#f-post').checked;
+    document.querySelectorAll('[data-pre]').forEach(el => el.hidden = post); document.querySelectorAll('[data-post]').forEach(el => el.hidden = !post); },
+};
+/* 글자를 입력할 때 (화면 전체가 아니라 필요한 부분만 다시 그림) */
+const INP = {
+  attSearch: t => { ui.search = t.value; $('#searchList').innerHTML = searchList(ev(ui.attEvent)); },
+  spent: t => { ui.spent[ui.settleEvent] = t.value; if (ui.confirm) ui.confirm = null; $('#settlePreview').innerHTML = settlePreview(ev(ui.settleEvent)); },
+  rules: () => updateRulePreview(),
+};
+
+document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (t && ACT[t.dataset.act]) ACT[t.dataset.act](t.dataset, t); });
+document.addEventListener('change', e => { const k = e.target.dataset?.change; if (k && CHG[k]) CHG[k](e.target); });
+document.addEventListener('input', e => { const k = e.target.dataset?.input; if (k && INP[k]) INP[k](e.target); });
+document.addEventListener('submit', e => { e.preventDefault(); const k = e.target.dataset.submit; if (k && ACT[k]) ACT[k](); });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'lateCode') ACT.lateCheckin({id:ui.eventId}); });
+
+/* 1초마다: 늦은 출석 QR 남은 시간 표시, 30초마다 새 코드 */
+setInterval(() => {
+  const cd = $('#lateCountdown'); if (!cd) return;
+  const e = ev(ui.attEvent);
+  if (!lateOpen(e)){ render(); return; }
+  cd.textContent = Math.ceil((SLOT - Date.now() % SLOT) / 1000) + '초';
+  const s = slotNow();
+  if (s !== ui.lastSlot){ ui.lastSlot = s; const q = $('#lateQR'); q.dataset.qr = `MOIM-LATE:${e.id}:${lateToken(e.id, s)}`; mountQR(q.parentNode); $('#lateCodeText').textContent = lateToken(e.id, s); }
+}, 1000);
+
+S = load() || seed();
+if (!load()) ui.tab = 'guide';
+render();
+</script>
